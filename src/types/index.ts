@@ -18,7 +18,7 @@ export interface AuthState {
   token: string | null;
   isLoggedIn: boolean;
 }
-ע
+
 export interface TasksState {
   tasks: Task[];
   loading: boolean;
