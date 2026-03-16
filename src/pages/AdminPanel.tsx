@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import type { AppDispatch, RootState } from "../store";
+import { fetchTasks, addTask, cancelTask } from "../store/slices/tasksSlice";
+import type { Task } from "../types";
 
 type Tab = "projects" | "tasks" | "subtasks" | "users" | "history";
 
@@ -97,39 +102,76 @@ function ProjectsTab() {
 }
 
 function TasksTab() {
-  return (
-    <div>
-      <div style={styles.pageTitle}>משימות</div>
-      <div style={styles.tableHeader}>
-        <span style={styles.tableTitle}>רשימת משימות</span>
-        <button style={styles.addBtn}>+ הוסף משימה</button>
+    const dispatch = useDispatch<AppDispatch>();
+    const { tasks, loading, error } = useSelector((state: RootState) => state.tasks);
+    const [showModal, setShowModal] = useState(false);  
+    useEffect(() => {
+      dispatch(fetchTasks());
+    }, []);
+    
+    const handleAdd = async (task: Partial<Task>) => {
+        await dispatch(addTask(task));
+        setShowModal(false);
+      };
+
+    if (loading) return <p>טוען...</p>;
+    if (error) return <p style={{ color: "red" }}>{error}</p>;
+  
+    return (
+      <div>
+        <div style={styles.pageTitle}>משימות</div>
+        <div style={styles.tableHeader}>
+          <span style={styles.tableTitle}>רשימת משימות</span>
+          <button style={styles.addBtn} onClick={() => setShowModal(true)}>+ הוסף משימה</button>
+        </div>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>כותרת</th>
+              <th style={styles.th}>פרויקט</th>
+              <th style={styles.th}>עדיפות</th>
+              <th style={styles.th}>סטטוס</th>
+              <th style={styles.th}>פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <tr key={task.Id}>
+                <td style={styles.td}>{task.Title}</td>
+                <td style={styles.td}>{task.ProjectName}</td>
+                <td style={styles.td}>
+                  <span style={
+                    task.Priority === "High" ? styles.badgeHigh :
+                    task.Priority === "Medium" ? styles.badgeProgress :
+                    styles.badgeDone
+                  }>
+                    {task.Priority === "High" ? "גבוהה" :
+                     task.Priority === "Medium" ? "בינונית" : "נמוכה"}
+                  </span>
+                </td>
+                <td style={styles.td}>
+                  <span style={
+                    task.Status === "InProgress" ? styles.badgeProgress :
+                    task.Status === "Completed" ? styles.badgeDone :
+                    task.Status === "Canceled" ? styles.badgeHigh :
+                    styles.badgeOpen
+                  }>
+                    {task.Status === "InProgress" ? "בביצוע" :
+                     task.Status === "Completed" ? "הושלם" :
+                     task.Status === "Canceled" ? "בוטל" : "פתוח"}
+                  </span>
+                </td>
+                <td style={styles.td}>
+                  <button style={styles.actionBtn}>עריכה</button>
+                  <button style={styles.actionBtn}>ביטול</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>כותרת</th>
-            <th style={styles.th}>פרויקט</th>
-            <th style={styles.th}>עדיפות</th>
-            <th style={styles.th}>סטטוס</th>
-            <th style={styles.th}>פעולות</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={styles.td}>בניית API</td>
-            <td style={styles.td}>פרויקט א</td>
-            <td style={styles.td}><span style={styles.badgeHigh}>גבוהה</span></td>
-            <td style={styles.td}><span style={styles.badgeProgress}>בביצוע</span></td>
-            <td style={styles.td}>
-              <button style={styles.actionBtn}>עריכה</button>
-              <button style={styles.actionBtn}>ביטול</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
+    );
+  }
 
 function SubTasksTab() {
   return (
@@ -161,6 +203,64 @@ function SubTasksTab() {
         </tbody>
       </table>
     </div>
+  );
+}
+function TaskForm({ onSubmit, onCancel }: {
+  onSubmit: (task: Partial<Task>) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectName, setProjectName] = useState("");
+  const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Medium");
+  const [deadline, setDeadline] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      Title: title,
+      Description: description,
+      ProjectName: projectName,
+      Priority: priority,
+      Status: "Open",
+      Deadline: new Date(deadline),
+      Expected: 0,
+      AssignedTo: 0,
+      StartedAt: new Date(),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div style={styles.field}>
+        <label style={styles.label}>כותרת</label>
+        <input style={styles.input} value={title} onChange={e => setTitle(e.target.value)} required />
+      </div>
+      <div style={styles.field}>
+        <label style={styles.label}>תיאור</label>
+        <input style={styles.input} value={description} onChange={e => setDescription(e.target.value)} />
+      </div>
+      <div style={styles.field}>
+        <label style={styles.label}>פרויקט</label>
+        <input style={styles.input} value={projectName} onChange={e => setProjectName(e.target.value)} />
+      </div>
+      <div style={styles.field}>
+        <label style={styles.label}>עדיפות</label>
+        <select style={styles.input} value={priority} onChange={e => setPriority(e.target.value as "Low" | "Medium" | "High")}>
+          <option value="Low">נמוכה</option>
+          <option value="Medium">בינונית</option>
+          <option value="High">גבוהה</option>
+        </select>
+      </div>
+      <div style={styles.field}>
+        <label style={styles.label}>דדליין</label>
+        <input style={styles.input} type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
+      </div>
+      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        <button type="button" style={styles.actionBtn} onClick={onCancel}>ביטול</button>
+        <button type="submit" style={styles.addBtn}>שמור</button>
+      </div>
+    </form>
   );
 }
 
