@@ -13,8 +13,8 @@ export interface Task {
   Description: string;
   Expected:number;
   AssignedTo:number;
-  Priority: "Low" | "Medium" | "High";
-  Status: "Open" | "InProgress" | "Completed" | "Canceled";
+  Priority: number;
+  Status: number;
   StartedAt:Date;
   Deadline:Date;
 }
@@ -25,7 +25,7 @@ export interface SubTask {
   Title: string;
   Description: string;
   AssignedTo: number;
-  Status: "Open" | "InProgress" | "Completed" | "Canceled";
+  Status: number;
   Deadline: Date;
 }
   
@@ -33,15 +33,15 @@ export interface Project {
   Id: number;
   NameProject: string;
   Description: string;
-  Status:"Open" | "InProgress" | "Completed" | "Canceled";
+  Status: number;
   Deadline: Date;
 }
 
 export interface History {
     Id: number;
     SubTaskId: number;
-    OldStatus: "Open" | "InProgress" | "Completed" | "Canceled";
-    NewStatus: "Open" | "InProgress" | "Completed" | "Canceled";
+    OldStatus: number;
+    NewStatus: number;
     ChangedAt: Date;
 }
 

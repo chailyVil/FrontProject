@@ -6,6 +6,7 @@ import type { AppDispatch, RootState } from "../store";
 import { Link } from "react-router-dom";
 
 
+
 function Login() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -68,49 +69,49 @@ function Login() {
 };
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>התחברות</h2>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>אימייל</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="הכנס אימייל"
-              style={styles.input}
-              dir="ltr"
-            />
-            {errors.email && <p style={styles.errorMsg}>{errors.email}</p>}
-          </div>
-          <div style={styles.field}>
-            <label style={styles.label}>סיסמה</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="הכנס סיסמה"
-              style={styles.input}
-              dir="ltr"
-            />
-            {errors.password && <p style={styles.errorMsg}>{errors.password}</p>}
-          </div>
-          {error && <p style={styles.errorMsg}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? "מתחבר..." : "התחבר"}
-          </button>
-        </form>
-        <p style={styles.footer}>
-          אין לך חשבון?{" "}
-          <Link to="/register" style={styles.link}>הירשם כאן</Link>
-        </p>
-      </div>
+  <div className="auth-wrapper">
+    <div className="auth-card">
+      <h2 className="auth-title">התחברות</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label className="form-label">אימייל</label>
+          <input
+            className="form-input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="הכנס אימייל"
+            dir="ltr"
+          />
+          {errors.email && <p className="form-error">{errors.email}</p>}
+        </div>
+        <div className="form-group">
+          <label className="form-label">סיסמה</label>
+          <input
+            className="form-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="הכנס סיסמה"
+            dir="ltr"
+          />
+          {errors.password && <p className="form-error">{errors.password}</p>}
+        </div>
+        {error && <p className="form-error">{error}</p>}
+        <button className="btn btn-primary" style={{width:"100%"}} type="submit" disabled={loading}>
+          {loading ? "מתחבר..." : "התחבר"}
+        </button>
+      </form>
+      <p className="auth-footer">
+        אין לך חשבון?{" "}
+        <Link to="/register" className="auth-link">הירשם כאן</Link>
+      </p>
     </div>
-  );
+  </div>
+);
 }
 
-const styles: Record<string, React.CSSProperties> = {
+/*const styles: Record<string, React.CSSProperties> = {
   wrapper: {
     minHeight: "100vh",
     display: "flex",
@@ -181,6 +182,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     textDecoration: "none",
   },
-};
+};*/
 
 export default Login;
