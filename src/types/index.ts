@@ -52,8 +52,10 @@ export interface AuthState {
   user: User | null;
   token: string | null;
   isLoggedIn: boolean;
+  loading: boolean;
+  error: string | null;
 }
-ע
+
 export interface TasksState {
   tasks: Task[];
   loading: boolean;

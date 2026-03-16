@@ -24,6 +24,8 @@ const initialState: AuthState = {
   user: null,
   token: null,
   isLoggedIn: false,
+  loading: false,
+  error: null,
 };
 
 const authSlice = createSlice({
@@ -40,15 +42,22 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // התחברות הצליחה
+      .addCase(login.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(login.fulfilled, (state, action) => {
+        state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isLoggedIn = true;
         localStorage.setItem("token", action.payload.token);
       })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "שגיאה בהתחברות";
+      })
   },
 });
-
 export const { logout } = authSlice.actions;
 export default authSlice.reducer;

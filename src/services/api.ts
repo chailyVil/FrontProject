@@ -2,7 +2,7 @@ import axios from "axios";
 
 // כתובת השרת 
 const API = axios.create({
-  baseURL: "https://localhost:7234/api", 
+  baseURL: "http://localhost:5170/api",
 });
 
 // מוסיף אוטומטית את ה-token לכל בקשה

@@ -1,24 +1,32 @@
 import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { login } from "../store/slices/authSlice";
-import type { AppDispatch, RootState } from "../store";
-import { Link } from "react-router-dom";
+import { register } from "../store/slices/authSlice";
+import type { AppDispatch } from "../store";
 
-
-function Login() {
+function Register() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
 
+  const [nameUser, setNameUser] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState({
+    nameUser: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const validate = () => {
     let valid = true;
-    const newErrors = { email: "", password: "" };
+    const newErrors = { nameUser: "", email: "", password: "", confirmPassword: "" };
 
+    if (!nameUser) {
+      newErrors.nameUser = "שם הוא שדה חובה";
+      valid = false;
+    }
     if (!email) {
       newErrors.email = "אימייל הוא שדה חובה";
       valid = false;
@@ -26,12 +34,15 @@ function Login() {
       newErrors.email = "אימייל לא תקין";
       valid = false;
     }
-
     if (!password) {
       newErrors.password = "סיסמה היא שדה חובה";
       valid = false;
     } else if (password.length < 6) {
       newErrors.password = "סיסמה חייבת להיות לפחות 6 תווים";
+      valid = false;
+    }
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = "הסיסמאות לא תואמות";
       valid = false;
     }
 
@@ -42,17 +53,35 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    const result = await dispatch(login({ Email: email, Password: password }));
-    if (login.fulfilled.match(result)) {
-      navigate("/dashboard");
+
+    const result = await dispatch(register({
+      NameUser: nameUser,
+      Email: email,
+      Password: password,
+    }));
+
+    if (register.fulfilled.match(result)) {
+      navigate("/login");
     }
   };
 
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
-        <h2 style={styles.title}>התחברות</h2>
+        <h2 style={styles.title}>הרשמה</h2>
         <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.field}>
+            <label style={styles.label}>שם משתמש</label>
+            <input
+              type="text"
+              value={nameUser}
+              onChange={(e) => setNameUser(e.target.value)}
+              placeholder="הכנס שם"
+              style={styles.input}
+              dir="rtl"
+            />
+            {errors.nameUser && <p style={styles.errorMsg}>{errors.nameUser}</p>}
+          </div>
           <div style={styles.field}>
             <label style={styles.label}>אימייל</label>
             <input
@@ -77,14 +106,25 @@ function Login() {
             />
             {errors.password && <p style={styles.errorMsg}>{errors.password}</p>}
           </div>
-          {error && <p style={styles.errorMsg}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? "מתחבר..." : "התחבר"}
+          <div style={styles.field}>
+            <label style={styles.label}>אימות סיסמה</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="הכנס סיסמה שוב"
+              style={styles.input}
+              dir="ltr"
+            />
+            {errors.confirmPassword && <p style={styles.errorMsg}>{errors.confirmPassword}</p>}
+          </div>
+          <button type="submit" style={styles.button}>
+            הירשם
           </button>
         </form>
         <p style={styles.footer}>
-          אין לך חשבון?{" "}
-          <Link to="/register" style={styles.link}>הירשם כאן</Link>
+          כבר יש לך חשבון?{" "}
+          <a href="/login" style={styles.link}>התחבר כאן</a>
         </p>
       </div>
     </div>
@@ -164,4 +204,4 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export default Login;
+export default Register;
