@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { AuthState, LoginDTO } from "../../types";
+import type { AuthState, LoginDTO ,RegisterDTO} from "../../types";
 import API from "../../services/api";
 
 // פעולת התחברות

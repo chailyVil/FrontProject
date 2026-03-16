@@ -1,9 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import tasksReducer from "./slices/tasksSlice";
 
 export const store = configureStore({
   reducer: {
-    // כאן נוסיף slices בהמשך
-  },
+    auth: authReducer,
+    tasks: tasksReducer,
+
+    },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
