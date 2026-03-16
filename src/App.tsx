@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import AdminPanel from "./pages/AdminPanel";
 import Register from "./pages/Register";
+import MyTasks from "./pages/MyTasks";
 
 // Protected Route — מגן על דפים שדורשים התחברות
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -40,7 +41,7 @@ function App() {
           </ProtectedRoute>
         } />
        <Route path="/register" element={<Register />} />
-
+       <Route path="/my-tasks" element={<MyTasks />} />
         <Route path="/admin" element={
           <AdminRoute>
             <AdminPanel />
