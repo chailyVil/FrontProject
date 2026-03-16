@@ -3,7 +3,7 @@ export interface User {
   NameUser: string;
   Email: string;
   Password: string;
-  Role: "user" | "admin";
+  role: "user" | "admin";
 }
 
 export interface Task {

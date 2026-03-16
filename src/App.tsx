@@ -18,7 +18,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   if (!isLoggedIn) return <Navigate to="/login" />;
-  if (user?.Role !== "admin") return <Navigate to="/dashboard" />;
+  if (user?.role !== "admin") return <Navigate to="/dashboard" />;
   return children;
 }
 

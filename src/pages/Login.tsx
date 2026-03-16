@@ -39,14 +39,33 @@ function Login() {
     return valid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  /*const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     const result = await dispatch(login({ Email: email, Password: password }));
     if (login.fulfilled.match(result)) {
-      navigate("/dashboard");
+      navigate("/AdminPanel");
     }
-  };
+  };*/
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validate()) return;
+
+  // שליחת הבקשה לשרת דרך ה-Redux Thunk
+  const result = await dispatch(login({ Email: email, Password: password }));
+
+  if (login.fulfilled.match(result)) {
+    // קבלת נתוני המשתמש מה-Payload שחזר מהשרת
+    const user = result.payload.user;
+
+
+    if (user?.role === "admin" ) {
+      navigate("/admin"); // ניתוב לפאנל הניהול כנדרש [cite: 29]
+    } else {
+      navigate("/Dashboard"); // ניתוב למשתמש רגיל
+    }
+  }
+};
 
   return (
     <div style={styles.wrapper}>
