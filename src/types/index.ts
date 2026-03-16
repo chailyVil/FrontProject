@@ -8,7 +8,7 @@ export interface User {
 
 export interface Task {
   Id: number;
-  ProjectName: string;
+  ProjectId: number;
   Title: string;
   Description: string;
   Expected:number;

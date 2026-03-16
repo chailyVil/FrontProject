@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store";
-import { fetchTasks, addTask, cancelTask } from "../store/slices/tasksSlice";
+import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/tasksSlice";
 import { fetchProjects, addProject, updateProject, cancelProject } from "../store/slices/projectSlice";
 import type { Task, Project } from "../types";
+
 
 type Tab = "projects" | "tasks" | "subtasks" | "users" | "history";
 
@@ -141,7 +142,7 @@ function ProjectsTab() {
               <tr key={project.Id}>
                 <td>{(project as any).nameProject || project.NameProject}</td>
                 <td>{(project as any).description || project.Description}</td>
-                <td>{project.Deadline ? new Date(project.Deadline).toLocaleDateString("he-IL") : "-"}</td>
+                <td>{(project as any).deadline ? new Date((project as any).deadline).toLocaleDateString("he-IL") : "-"}</td>
                 <td>
                   <span className={`badge ${
                     project.Status === "InProgress" ? "badge-progress" :
@@ -251,15 +252,28 @@ function ProjectForm({ onSubmit, onCancel, initialData }: {
 function TasksTab() {
   const dispatch = useDispatch<AppDispatch>();
   const { tasks, loading, error } = useSelector((state: RootState) => state.tasks);
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editTask, setEditTask] = useState<any>(null);
 
   useEffect(() => {
     dispatch(fetchTasks());
   }, []);
 
-  const handleAdd = async (task: Partial<Task>) => {
+  const handleAdd = async (task: any) => {
     await dispatch(addTask(task));
-    setShowModal(false);
+    await dispatch(fetchTasks());
+    setShowAddModal(false);
+  };
+
+  const handleEdit = async (task: any) => {
+    await dispatch(updateTask(task));
+    await dispatch(fetchTasks());
+    setEditTask(null);
+  };
+
+  const handleCancel = async (task: any) => {
+    await dispatch(cancelTask(task));
+    await dispatch(fetchTasks());
   };
 
   if (loading) return <div className="loading">טוען...</div>;
@@ -269,19 +283,35 @@ function TasksTab() {
     <div>
       <div className="page-header">
         <h2 className="page-title">משימות</h2>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
           + הוסף משימה
         </button>
       </div>
 
-      {showModal && (
+      {showAddModal && (
         <div className="modal-overlay">
           <div className="modal-card">
             <div className="modal-header">
               <h3 className="modal-title">הוספת משימה</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
-            <TaskForm onSubmit={handleAdd} onCancel={() => setShowModal(false)} />
+            <TaskForm onSubmit={handleAdd} onCancel={() => setShowAddModal(false)} />
+          </div>
+        </div>
+      )}
+
+      {editTask && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3 className="modal-title">עריכת משימה</h3>
+              <button className="modal-close" onClick={() => setEditTask(null)}>✕</button>
+            </div>
+            <TaskForm
+              onSubmit={(data) => handleEdit({ ...editTask, ...data })}
+              onCancel={() => setEditTask(null)}
+              initialData={editTask}
+            />
           </div>
         </div>
       )}
@@ -294,39 +324,45 @@ function TasksTab() {
               <th>פרויקט</th>
               <th>עדיפות</th>
               <th>סטטוס</th>
+              <th>דדליין</th>
               <th>פעולות</th>
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task) => (
-              <tr key={task.Id}>
-                <td>{task.Title}</td>
-                <td>{task.ProjectName}</td>
+            {tasks.map((task: any) => (
+              <tr key={task.id || task.Id}>
+                <td>{task.title || task.Title}</td>
+                <td>{task.projectName || task.ProjectName}</td>
                 <td>
                   <span className={`badge ${
-                    task.Priority === "High" ? "badge-high" :
-                    task.Priority === "Medium" ? "badge-medium" :
+                    (task.priority || task.Priority) === 2 ? "badge-high" :
+                    (task.priority || task.Priority) === 1 ? "badge-medium" :
                     "badge-low"
                   }`}>
-                    {task.Priority === "High" ? "גבוהה" :
-                     task.Priority === "Medium" ? "בינונית" : "נמוכה"}
+                    {(task.priority || task.Priority) === 2 ? "גבוהה" :
+                     (task.priority || task.Priority) === 1 ? "בינונית" : "נמוכה"}
                   </span>
                 </td>
                 <td>
                   <span className={`badge ${
-                    task.Status === "InProgress" ? "badge-progress" :
-                    task.Status === "Completed" ? "badge-done" :
-                    task.Status === "Canceled" ? "badge-canceled" :
+                    (task.status || task.Status) === 1 ? "badge-progress" :
+                    (task.status || task.Status) === 2 ? "badge-done" :
+                    (task.status || task.Status) === 3 ? "badge-canceled" :
                     "badge-open"
                   }`}>
-                    {task.Status === "InProgress" ? "בביצוע" :
-                     task.Status === "Completed" ? "הושלם" :
-                     task.Status === "Canceled" ? "בוטל" : "פתוח"}
+                    {(task.status || task.Status) === 1 ? "בביצוע" :
+                     (task.status || task.Status) === 2 ? "הושלם" :
+                     (task.status || task.Status) === 3 ? "בוטל" : "פתוח"}
                   </span>
                 </td>
+                <td>{(task.deadline || task.Deadline) ? new Date(task.deadline || task.Deadline).toLocaleDateString("he-IL") : "-"}</td>
                 <td>
-                  <button className="btn btn-outline">עריכה</button>
-                  <button className="btn btn-danger" onClick={() => dispatch(cancelTask(task))}>ביטול</button>
+                  <button className="btn btn-outline" onClick={() => setEditTask(task)}>עריכה</button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleCancel(task)}
+                    disabled={(task.status || task.Status) === 3}
+                  >ביטול</button>
                 </td>
               </tr>
             ))}
@@ -337,28 +373,50 @@ function TasksTab() {
   );
 }
 
-function TaskForm({ onSubmit, onCancel }: {
-  onSubmit: (task: Partial<Task>) => void;
+function TaskForm({ onSubmit, onCancel, initialData }: {
+    
+  onSubmit: (task: any) => void;
   onCancel: () => void;
+  initialData?: any;
 }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Medium");
-  const [deadline, setDeadline] = useState("");
+    const dispatch = useDispatch<AppDispatch>();
+    useEffect(() => {
+    dispatch(fetchProjects());
+    }, []);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const [title, setTitle] = useState(initialData?.title || initialData?.Title || "");
+  const [description, setDescription] = useState(initialData?.description || initialData?.Description || "");
+  const projects = useSelector((state: RootState) => state.projects.projects);
+  const [projectId, setProjectId] = useState(initialData?.projectId || 0);
+  const [priority, setPriority] = useState(initialData?.priority?.toString() || "0");
+  const [status, setStatus] = useState(initialData?.status?.toString() || initialData?.Status?.toString() || "0");
+  const [deadline, setDeadline] = useState(
+    (initialData?.deadline || initialData?.Deadline)
+      ? new Date(initialData.deadline || initialData.Deadline).toISOString().split("T")[0]
+      : ""
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. מחפשים את הפרויקט הנבחר מתוך רשימת הפרויקטים כדי לחלץ את השם שלו
+    const selectedProject = projects.find((p: any) => (p.id || p.Id) === projectId);
+    
+    // 2. שומרים את השם (בודקים גם את האפשרות של אות גדולה או קטנה)
+    const projectName = selectedProject ? (selectedProject.nameProject || selectedProject.NameProject) : "";
+
+    // 3. שולחים את האובייקט המלא כולל השדה שהיה חסר
     onSubmit({
-      Title: title,
-      Description: description,
-      ProjectName: projectName,
-      Priority: priority,
-      Status: "Open",
-      Deadline: new Date(deadline),
-      Expected: 0,
-      AssignedTo: 0,
-      StartedAt: new Date(),
+      projectId: projectId,
+      ProjectName: projectName, // השדה שהשרת צעק עליו שהוא חסר
+      title: title,
+      description: description,
+      priority: parseInt(priority),
+      status: parseInt(status), // שיניתי לסטטוס מה-state כדי שיהיה דינמי
+      deadline: new Date(deadline),
+      startedAt: new Date(),
+      expected: 30,
+      assignedTo: (user as any)?.id || (user as any)?.Id || 2,
     });
   };
 
@@ -374,19 +432,35 @@ function TaskForm({ onSubmit, onCancel }: {
       </div>
       <div className="form-group">
         <label className="form-label">פרויקט</label>
-        <input className="form-input" value={projectName} onChange={e => setProjectName(e.target.value)} />
-      </div>
+        <select className="form-input" value={projectId} onChange={e => setProjectId(parseInt(e.target.value))} required>
+            <option value="">בחר פרויקט</option>
+            {projects.map((p: any) => (
+            <option key={p.id || p.Id} value={p.id || p.Id}>
+                {p.nameProject || p.NameProject}
+            </option>
+            ))}
+        </select>
+        </div>
       <div className="form-group">
         <label className="form-label">עדיפות</label>
-        <select className="form-input" value={priority} onChange={e => setPriority(e.target.value as "Low" | "Medium" | "High")}>
-          <option value="Low">נמוכה</option>
-          <option value="Medium">בינונית</option>
-          <option value="High">גבוהה</option>
+        <select className="form-input" value={priority} onChange={e => setPriority(e.target.value)}>
+          <option value="0">נמוכה</option>
+          <option value="1">בינונית</option>
+          <option value="2">גבוהה</option>
+        </select>
+      </div>
+      <div className="form-group">
+        <label className="form-label">סטטוס</label>
+        <select className="form-input" value={status} onChange={e => setStatus(e.target.value)}>
+          <option value="0">פתוח</option>
+          <option value="1">בביצוע</option>
+          <option value="2">הושלם</option>
+          <option value="3">בוטל</option>
         </select>
       </div>
       <div className="form-group">
         <label className="form-label">דדליין</label>
-        <input className="form-input" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
+        <input className="form-input" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} required />
       </div>
       <div className="modal-footer">
         <button type="button" className="btn btn-outline" onClick={onCancel}>ביטול</button>
