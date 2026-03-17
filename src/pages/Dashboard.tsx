@@ -36,6 +36,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     dispatch(fetchTasks());
   }, [dispatch]);
+  console.log("tasks:", tasks.map(t => ({ Id: t.Id, AssignedTo: t.AssignedTo, Status: t.Status })));
 
   const handleTakeTask = async (task: Task) => {
     if (!user) {
