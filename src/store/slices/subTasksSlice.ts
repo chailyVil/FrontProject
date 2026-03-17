@@ -3,12 +3,12 @@ import type { SubTasksState, SubTask } from "../../types";
 import API from "../../services/api";
 
 export const fetchSubTasks = createAsyncThunk(
-    "subTasks/fetchAll",
-    async (taskId: number) => {
-      const response = await API.get(`/SubTask/${taskId}`);
-      return response.data;
-    }
-  );
+  "subTasks/fetchAll",
+  async () => {
+    const response = await API.get("/SubTask");
+    return response.data;
+  }
+);
   
   export const addSubTask = createAsyncThunk(
     "subTasks/add",

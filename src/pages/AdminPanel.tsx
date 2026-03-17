@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store";
 import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/tasksSlice";
+import { fetchSubTasks, addSubTask, updateSubTask,cancelSubTask } from "../store/slices/subTasksSlice";
+
 import { fetchProjects, addProject, updateProject, cancelProject } from "../store/slices/projectSlice";
-import type { Task, Project } from "../types";
+import type { Task, Project, SubTask } from "../types";
 
 
 type Tab = "projects" | "tasks" | "subtasks" | "users" | "history";
@@ -145,14 +147,14 @@ function ProjectsTab() {
                 <td>{(project as any).deadline ? new Date((project as any).deadline).toLocaleDateString("he-IL") : "-"}</td>
                 <td>
                   <span className={`badge ${
-                    project.Status === "InProgress" ? "badge-progress" :
-                    project.Status === "Completed" ? "badge-done" :
-                    project.Status === "Canceled" ? "badge-canceled" :
+                    project.Status == 1 ? "badge-progress" :
+                    project.Status ==2 ? "badge-done" :
+                    project.Status == 3 ? "badge-canceled" :
                     "badge-open"
                   }`}>
-                    {project.Status === "InProgress" ? "בביצוע" :
-                     project.Status === "Completed" ? "הושלם" :
-                     project.Status === "Canceled" ? "בוטל" : "פתוח"}
+                    {project.Status == 1 ? "בביצוע" :
+                     project.Status ==2 ? "הושלם" :
+                     project.Status ==3 ? "בוטל" : "פתוח"}
                   </span>
                 </td>
                 <td>
@@ -162,7 +164,7 @@ function ProjectsTab() {
                   <button
                     className="btn btn-danger"
                     onClick={() => handleCancel(project)}
-                    disabled={project.Status === "Canceled"}
+                    disabled={project.Status ==3}
                   >
                     ביטול
                   </button>
@@ -249,6 +251,7 @@ function ProjectForm({ onSubmit, onCancel, initialData }: {
     </form>
   );
 }
+
 function TasksTab() {
   const dispatch = useDispatch<AppDispatch>();
   const { tasks, loading, error } = useSelector((state: RootState) => state.tasks);
@@ -321,10 +324,11 @@ function TasksTab() {
           <thead>
             <tr>
               <th>כותרת</th>
-              <th>פרויקט</th>
+              <th>תיאור</th>
+              <th>משויך לפרויקט </th>
+              <th>עובד אחראי</th>
               <th>עדיפות</th>
               <th>סטטוס</th>
-              <th>דדליין</th>
               <th>פעולות</th>
             </tr>
           </thead>
@@ -412,11 +416,11 @@ const handleSubmit = (e: React.FormEvent) => {
       title: title,
       description: description,
       priority: parseInt(priority),
-      status: parseInt(status), // שיניתי לסטטוס מה-state כדי שיהיה דינמי
-      deadline: new Date(deadline),
-      startedAt: new Date(),
-      expected: 30,
-      assignedTo: (user as any)?.id || (user as any)?.Id || 2,
+      status: open,
+      //deadline: new Date(deadline),
+      //startedAt: new Date(),
+      //expected: 30,
+      assignedTo: null,
     });
   };
 
@@ -441,12 +445,189 @@ const handleSubmit = (e: React.FormEvent) => {
             ))}
         </select>
         </div>
+      
+      
+     
       <div className="form-group">
-        <label className="form-label">עדיפות</label>
-        <select className="form-input" value={priority} onChange={e => setPriority(e.target.value)}>
-          <option value="0">נמוכה</option>
-          <option value="1">בינונית</option>
-          <option value="2">גבוהה</option>
+        <label className="form-label">דדליין</label>
+        <input className="form-input" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} required />
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn btn-outline" onClick={onCancel}>ביטול</button>
+        <button type="submit" className="btn btn-primary">שמור</button>
+      </div>
+    </form>
+  );
+}
+
+function SubTasksTab() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { subTasks, loading, error } = useSelector((state: RootState) => state.subTasks);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editSubTask, setEditSubTask] = useState<any>(null);
+  useEffect(() => {
+    dispatch(fetchSubTasks());
+  }, []);
+
+  const handleAdd = async (task: any) => {
+    await dispatch(addSubTask(task));
+    await dispatch(fetchSubTasks());
+    setShowAddModal(false);
+  };
+
+  const handleEdit = async (task: any) => {
+    await dispatch(updateSubTask(task));
+    await dispatch(fetchSubTasks());
+    setEditSubTask(null);
+  };
+
+  const handleCancel = async (task: any) => {
+    await dispatch(cancelSubTask(task));
+    await dispatch(fetchSubTasks());
+  };
+
+  if (loading) return <div className="loading">טוען...</div>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+
+  return (
+    <div>
+      <div className="page-header">
+        <h2 className="page-title"> תת משימות</h2>
+        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+          + הוסף תת משימה
+        </button>
+      </div>
+
+      {showAddModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3 className="modal-title">הוספת תת משימה</h3>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <SubTaskForm  onSubmit={handleAdd} onCancel={() => setShowAddModal(false)} />
+          </div>
+        </div>
+      )}
+
+      {editSubTask && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3 className="modal-title">עריכת תת משימה</h3>
+              <button className="modal-close" onClick={() => setEditSubTask(null)}>✕</button>
+            </div>
+            <SubTaskForm 
+              onSubmit={(data) => handleEdit({ ...editSubTask, ...data })}
+              onCancel={() => setEditSubTask(null)}
+              initialData={editSubTask}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>כותרת</th>
+              <th>תיאור</th>
+              <th>משויך למשימה </th>
+              <th>עובד אחראי</th>
+              <th>סטטוס</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subTasks.map((subTask: any) => (
+              <tr key={subTask.id || subTask.Id}>
+                <td>{subTask.title || subTask.Title}</td>
+                <td>{subTask.taskName || subTask.TaskName}</td>
+                
+                <td>
+                  <span className={`badge ${
+                    (subTask.status || subTask.Status) === 1 ? "badge-progress" :
+                    (subTask.status || subTask.Status) === 2 ? "badge-done" :
+                    (subTask.status || subTask.Status) === 3 ? "badge-canceled" :
+                    "badge-open"
+                  }`}>
+                    {(subTask.status || subTask.Status) === 1 ? "בביצוע" :
+                     (subTask.status || subTask.Status) === 2 ? "הושלם" :
+                     (subTask.status || subTask.Status) === 3 ? "בוטל" : "פתוח"}
+                  </span>
+                </td>
+                <td>
+                  <button className="btn btn-outline" onClick={() => setEditSubTask(subTask)}>עריכה</button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleCancel(subTask)}
+                    disabled={(subTask.status || subTask.Status) === 3}
+                  >ביטול</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+function SubTaskForm({ onSubmit, onCancel, initialData }: {
+  onSubmit: (subTask: any) => void;
+  onCancel: () => void;
+  initialData?: any;
+}) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { tasks } = useSelector((state: RootState) => state.tasks);
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    dispatch(fetchTasks());
+  }, []);
+
+  const [title, setTitle] = useState(initialData?.title || initialData?.Title || "");
+  const [description, setDescription] = useState(initialData?.description || initialData?.Description || "");
+  const [taskId, setTaskId] = useState(initialData?.taskId || 0);
+  const [status, setStatus] = useState(initialData?.status?.toString() || "0");
+  const [deadline, setDeadline] = useState(
+    (initialData?.deadline || initialData?.Deadline)
+      ? new Date(initialData.deadline || initialData.Deadline).toISOString().split("T")[0]
+      : ""
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      taskId,
+      title,
+      description,
+      status: parseInt(status),
+      deadline: new Date(deadline),
+      assignedTo: (user as any)?.id || (user as any)?.Id || 2,
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="form-group">
+        <label className="form-label">כותרת</label>
+        <input className="form-input" value={title} onChange={e => setTitle(e.target.value)} required />
+      </div>
+      <div className="form-group">
+        <label className="form-label">תיאור</label>
+        <input className="form-input" value={description} onChange={e => setDescription(e.target.value)} />
+      </div>
+      <div className="form-group">
+        <label className="form-label">משימה</label>
+        <select className="form-input" value={taskId} onChange={e => setTaskId(parseInt(e.target.value))} required>
+          <option value="">בחר משימה</option>
+          {tasks.map((t: any) => (
+            <option key={t.id || t.Id} value={t.id || t.Id}>
+              {t.title || t.Title}
+            </option>
+          ))}
         </select>
       </div>
       <div className="form-group">
@@ -470,7 +651,7 @@ const handleSubmit = (e: React.FormEvent) => {
   );
 }
 
-function SubTasksTab() {
+/*function SubTasksTab() {
   return (
     <div>
       <div className="page-header">
@@ -502,7 +683,7 @@ function SubTasksTab() {
       </div>
     </div>
   );
-}
+}*/
 
 function UsersTab() {
   return (
