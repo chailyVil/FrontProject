@@ -610,8 +610,11 @@ function SubTaskForm({ onSubmit, onCancel, initialData }: {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const selectedTask = tasks.find((t: any) => (t.id || t.Id) === taskId);
+const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
     onSubmit({
       taskId,
+      taskName: taskName, 
       title,
       description,
       status: parseInt(status),
