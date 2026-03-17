@@ -58,8 +58,7 @@ export const updateTask = createAsyncThunk(
           // ממפים camelCase מהשרת ל-PascalCase
           state.tasks = action.payload.map((t: any) => ({
             Id: t.id,
-            ProjectId: action.payload.projectId,
-            ProjectName: t.projectName,
+            ProjectId: t.projectId,  // ✓            ProjectName: t.projectName,
             Title: t.title,
             Description: t.description,
             Expected: t.expected,
