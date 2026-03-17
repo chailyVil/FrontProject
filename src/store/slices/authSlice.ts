@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type { AuthState, LoginDTO ,RegisterDTO} from "../../types";
+import type { AuthState, LoginDTO, RegisterDTO } from "../../types";
 import API from "../../services/api";
 
-// פעולת התחברות
+// התחברות
 export const login = createAsyncThunk(
   "auth/login",
   async (credentials: LoginDTO) => {
@@ -11,7 +11,7 @@ export const login = createAsyncThunk(
   }
 );
 
-// פעולת הרשמה
+// הרשמה
 export const register = createAsyncThunk(
   "auth/register",
   async (credentials: RegisterDTO) => {
@@ -20,10 +20,21 @@ export const register = createAsyncThunk(
   }
 );
 
+// שחזור יוזר לפי token (אחרי רענון)
+export const fetchMe = createAsyncThunk(
+  "auth/fetchMe",
+  async () => {
+    const response = await API.get("/auth/me");
+    return response.data;
+  }
+);
+
+const token = localStorage.getItem("token");
+
 const initialState: AuthState = {
   user: null,
-  token: null,
-  isLoggedIn: false,
+  token: token,
+  isLoggedIn: !!token,
   loading: false,
   error: null,
 };
@@ -32,7 +43,6 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // התנתקות
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -42,6 +52,7 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -57,7 +68,45 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "שגיאה בהתחברות";
       })
+
+      // Register
+      .addCase(register.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(register.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isLoggedIn = true;
+        localStorage.setItem("token", action.payload.token);
+      })
+      .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "שגיאה בהרשמה";
+      })
+
+      // fetchMe — שחזור יוזר אחרי רענון
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        // השרת מחזיר camelCase, ממפים ל-PascalCase
+        state.user = {
+          Id: action.payload.id,
+          NameUser: action.payload.nameUser,
+          Email: action.payload.email,
+          Password: action.payload.password,
+          role: action.payload.role,
+        };
+        state.isLoggedIn = true;
+      })
+      .addCase(fetchMe.rejected, (state) => {
+        // token לא תקף — ניקוי מלא
+        state.user = null;
+        state.token = null;
+        state.isLoggedIn = false;
+        localStorage.removeItem("token");
+      });
   },
 });
+
 export const { logout } = authSlice.actions;
 export default authSlice.reducer;

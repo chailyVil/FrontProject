@@ -55,7 +55,20 @@ export const updateTask = createAsyncThunk(
         })
         .addCase(fetchTasks.fulfilled, (state, action) => {
           state.loading = false;
-          state.tasks = action.payload;
+          // ממפים camelCase מהשרת ל-PascalCase
+          state.tasks = action.payload.map((t: any) => ({
+            Id: t.id,
+            ProjectId: action.payload.projectId,
+            ProjectName: t.projectName,
+            Title: t.title,
+            Description: t.description,
+            Expected: t.expected,
+            AssignedTo: t.assignedTo,
+            Priority: t.priority,
+            Status: t.status,
+            StartedAt: t.startedAt,
+            Deadline: t.deadline,
+          }));
         })
         .addCase(fetchTasks.rejected, (state, action) => {
           state.loading = false;
@@ -67,8 +80,21 @@ export const updateTask = createAsyncThunk(
         })
         // עדכון
         .addCase(updateTask.fulfilled, (state, action) => {
-          const index = state.tasks.findIndex(t => t.Id === action.payload.Id);
-          if (index !== -1) state.tasks[index] = action.payload;
+          const mapped = {
+            Id: action.payload.id,
+            ProjectId: action.payload.projectId,
+            ProjectName: action.payload.projectName,
+            Title: action.payload.title,
+            Description: action.payload.description,
+            Expected: action.payload.expected,
+            AssignedTo: action.payload.assignedTo,
+            Priority: action.payload.priority,
+            Status: action.payload.status,
+            StartedAt: action.payload.startedAt,
+            Deadline: action.payload.deadline,
+          };
+          const index = state.tasks.findIndex(t => t.Id === mapped.Id);
+          if (index !== -1) state.tasks[index] = mapped;
         })
         // ביטול
         .addCase(cancelTask.fulfilled, (state, action) => {

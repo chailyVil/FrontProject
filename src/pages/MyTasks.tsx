@@ -104,9 +104,9 @@ const MyTasks: React.FC = () => {
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
-  const totalMyTasks = user ? tasks.filter(t => t.AssignedTo === user.Id).length : 0;
+  const totalMyTasks = user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === user.Id).length : 0;
 
-  const myTasks = (user ? tasks.filter(t => t.AssignedTo === user.Id) : [])
+  const myTasks = (user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === user.Id) : [])
     .filter(t =>
       t.Title?.toLowerCase().includes(search.toLowerCase()) ||
       t.Description?.toLowerCase().includes(search.toLowerCase())

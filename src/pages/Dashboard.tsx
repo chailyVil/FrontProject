@@ -55,11 +55,16 @@ const Dashboard: React.FC = () => {
 
   // משימות פנויות — רק ממתינות (Status=0) וללא אחראי
   const availableTasks = tasks
-    .filter(t => !t.AssignedTo && t.Status === 0)
-    .filter(t =>
-      t.Title?.toLowerCase().includes(search.toLowerCase()) ||
-      t.Description?.toLowerCase().includes(search.toLowerCase())
-    );
+  .filter(t => {
+    const isUnassigned = t.AssignedTo === null || t.AssignedTo === undefined;
+    const isPending = t.Status === 0;
+    const notJustTaken = !takenIds.has(t.Id);
+    return isUnassigned && isPending && notJustTaken;
+  })
+  .filter(t =>
+    t.Title?.toLowerCase().includes(search.toLowerCase()) ||
+    t.Description?.toLowerCase().includes(search.toLowerCase())
+  );
 
   // המשימות שהיוזר כבר לקח
   const myTasksCount = user ? tasks.filter(t => t.AssignedTo === user.Id).length : 0;

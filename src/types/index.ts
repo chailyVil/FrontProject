@@ -12,7 +12,7 @@ export interface Task {
   Title: string;
   Description: string;
   Expected:number;
-  AssignedTo:number;
+  AssignedTo: number | null;  // במקום: AssignedTo: number
   Priority: number;
   Status: number;
   StartedAt:Date;

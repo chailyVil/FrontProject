@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import type { RootState } from "./store";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "./store";
+import { fetchMe } from "./store/slices/authSlice";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -24,11 +25,21 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { token } = useSelector((state: RootState) => state.auth);
+
+  // אחרי רענון — משחזר את היוזר לפי ה-token
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchMe());
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
@@ -40,8 +51,15 @@ function App() {
             <Profile />
           </ProtectedRoute>
         } />
-       <Route path="/register" element={<Register />} />
-       <Route path="/my-tasks" element={<MyTasks />} />
+
+        <Route path="/register" element={<Register />} />
+
+        <Route path="/my-tasks" element={
+          <ProtectedRoute>
+            <MyTasks />
+          </ProtectedRoute>
+        } />
+
         <Route path="/admin" element={
           <AdminRoute>
             <AdminPanel />
