@@ -140,8 +140,8 @@ function ProjectsTab() {
             </tr>
           </thead>
           <tbody>
-            {projects.map((project) => (
-              <tr key={project.Id}>
+            {projects.map((project: any) => (
+                <tr key={project.id || project.Id}>
                 <td>{(project as any).nameProject || project.NameProject}</td>
                 <td>{(project as any).description || project.Description}</td>
                 <td>{(project as any).deadline ? new Date((project as any).deadline).toLocaleDateString("he-IL") : "-"}</td>
@@ -393,6 +393,7 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
   const projects = useSelector((state: RootState) => state.projects.projects);
   const [projectId, setProjectId] = useState(initialData?.projectId || 0);
   const [priority, setPriority] = useState(initialData?.priority?.toString() || "0");
+  const [expected, setExpected] = useState(initialData?.expected || 1);
   const [status, setStatus] = useState(initialData?.status?.toString() || initialData?.Status?.toString() || "0");
   const [deadline, setDeadline] = useState(
     (initialData?.deadline || initialData?.Deadline)
@@ -416,10 +417,10 @@ const handleSubmit = (e: React.FormEvent) => {
       title: title,
       description: description,
       priority: parseInt(priority),
-      status: open,
-      //deadline: new Date(deadline),
+      status: 0,
+      deadline: new Date(deadline),
       //startedAt: new Date(),
-      //expected: 30,
+      expected: expected,
       assignedTo: null,
     });
   };
@@ -446,7 +447,17 @@ const handleSubmit = (e: React.FormEvent) => {
         </select>
         </div>
       
-      
+      <div className="form-group">
+  <label className="form-label">זמן משוער (בימים)</label>
+  <input
+    className="form-input"
+    type="number"
+    min={1}
+    value={expected}
+    onChange={e => setExpected(parseInt(e.target.value))}
+    required
+  />
+</div>
      
       <div className="form-group">
         <label className="form-label">דדליין</label>
