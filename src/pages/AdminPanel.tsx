@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store";
 import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/tasksSlice";
 import { fetchSubTasks, addSubTask, updateSubTask,cancelSubTask } from "../store/slices/subTasksSlice";
+import { fetchUsers } from "../store/slices/usersSlice";
 
 import { fetchProjects, addProject, updateProject, cancelProject } from "../store/slices/projectSlice";
 import type { Task, Project, SubTask } from "../types";
@@ -255,12 +256,20 @@ function ProjectForm({ onSubmit, onCancel, initialData }: {
 function TasksTab() {
   const dispatch = useDispatch<AppDispatch>();
   const { tasks, loading, error } = useSelector((state: RootState) => state.tasks);
+  const { users } = useSelector((state: RootState) => state.users);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editTask, setEditTask] = useState<any>(null);
 
   useEffect(() => {
     dispatch(fetchTasks());
+    dispatch(fetchUsers());
   }, []);
+
+  const getUserName = (id: number | null) => {
+    if (!id) return "-";
+    const user = users.find((u: any) => (u.id || u.Id) === id);
+    return user ? (user.nameUser || user.NameUser) : "-";
+  };
 
   const handleAdd = async (task: any) => {
     await dispatch(addTask(task));
@@ -325,10 +334,11 @@ function TasksTab() {
             <tr>
               <th>כותרת</th>
               <th>תיאור</th>
-              <th>משויך לפרויקט </th>
+              <th>משויך לפרויקט</th>
               <th>עובד אחראי</th>
               <th>עדיפות</th>
               <th>סטטוס</th>
+              <th>דדליין</th>
               <th>פעולות</th>
             </tr>
           </thead>
@@ -336,36 +346,38 @@ function TasksTab() {
             {tasks.map((task: any) => (
               <tr key={task.id || task.Id}>
                 <td>{task.title || task.Title}</td>
-                <td>{task.projectName || task.ProjectName}</td>
+                <td>{task.description || task.Description}</td>
+                <td>{task.projectName || task.ProjectName || "-"}</td>
+                <td>{getUserName(task.assignedTo ?? task.AssignedTo)}</td>
                 <td>
                   <span className={`badge ${
-                    (task.priority || task.Priority) === 2 ? "badge-high" :
-                    (task.priority || task.Priority) === 1 ? "badge-medium" :
+                    (task.priority ?? task.Priority) === 2 ? "badge-high" :
+                    (task.priority ?? task.Priority) === 1 ? "badge-medium" :
                     "badge-low"
                   }`}>
-                    {(task.priority || task.Priority) === 2 ? "גבוהה" :
-                     (task.priority || task.Priority) === 1 ? "בינונית" : "נמוכה"}
+                    {(task.priority ?? task.Priority) === 2 ? "גבוהה" :
+                     (task.priority ?? task.Priority) === 1 ? "בינונית" : "נמוכה"}
                   </span>
                 </td>
                 <td>
                   <span className={`badge ${
-                    (task.status || task.Status) === 1 ? "badge-progress" :
-                    (task.status || task.Status) === 2 ? "badge-done" :
-                    (task.status || task.Status) === 3 ? "badge-canceled" :
+                    (task.status ?? task.Status) === 1 ? "badge-progress" :
+                    (task.status ?? task.Status) === 2 ? "badge-done" :
+                    (task.status ?? task.Status) === 3 ? "badge-canceled" :
                     "badge-open"
                   }`}>
-                    {(task.status || task.Status) === 1 ? "בביצוע" :
-                     (task.status || task.Status) === 2 ? "הושלם" :
-                     (task.status || task.Status) === 3 ? "בוטל" : "פתוח"}
+                    {(task.status ?? task.Status) === 1 ? "בביצוע" :
+                     (task.status ?? task.Status) === 2 ? "הושלם" :
+                     (task.status ?? task.Status) === 3 ? "בוטל" : "פתוח"}
                   </span>
                 </td>
-                <td>{(task.deadline || task.Deadline) ? new Date(task.deadline || task.Deadline).toLocaleDateString("he-IL") : "-"}</td>
+                <td>{task.deadline ? new Date(task.deadline).toLocaleDateString("he-IL") : "-"}</td>
                 <td>
                   <button className="btn btn-outline" onClick={() => setEditTask(task)}>עריכה</button>
                   <button
                     className="btn btn-danger"
                     onClick={() => handleCancel(task)}
-                    disabled={(task.status || task.Status) === 3}
+                    disabled={(task.status ?? task.Status) === 3}
                   >ביטול</button>
                 </td>
               </tr>
@@ -376,7 +388,6 @@ function TasksTab() {
     </div>
   );
 }
-
 function TaskForm({ onSubmit, onCancel, initialData }: {
     
   onSubmit: (task: any) => void;
@@ -413,7 +424,7 @@ const handleSubmit = (e: React.FormEvent) => {
     // 3. שולחים את האובייקט המלא כולל השדה שהיה חסר
     onSubmit({
       projectId: projectId,
-      ProjectName: projectName, // השדה שהשרת צעק עליו שהוא חסר
+      projectName: projectName, // השדה שהשרת צעק עליו שהוא חסר
       title: title,
       description: description,
       priority: parseInt(priority),
