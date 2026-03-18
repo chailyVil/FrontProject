@@ -108,6 +108,7 @@ const handleUpdateSubTaskStatus = async (subTask: any, newStatus: number) => {
     AssignedTo: subTask.assignedTo || subTask.AssignedTo,
     Status: newStatus,
   } as any));
+  await dispatch(fetchTasks());
   setSuccessMsg('הסטטוס עודכן בהצלחה');
   setTimeout(() => setSuccessMsg(null), 3000);
 };

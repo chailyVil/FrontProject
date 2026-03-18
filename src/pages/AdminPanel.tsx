@@ -185,22 +185,7 @@ function ProjectsTab() {
         </div>
       )}
 
-      {/* Modal עריכה */}
-      {editProject && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <div className="modal-header">
-              <h3 className="modal-title">עריכת פרויקט</h3>
-              <button className="modal-close" onClick={() => setEditProject(null)}>✕</button>
-            </div>
-            <ProjectForm
-              onSubmit={(data) => handleEdit({ ...editProject, ...data } as Project)}
-              onCancel={() => setEditProject(null)}
-              initialData={editProject}
-            />
-          </div>
-        </div>
-      )}
+     
 
       <div className="table-wrapper">
         <table className="data-table">
@@ -232,9 +217,7 @@ function ProjectsTab() {
                   </span>
                 </td>
                 <td>
-                  <button className="btn btn-outline" onClick={() => setEditProject(project)}>
-                    עריכה
-                  </button>
+                  
                   <button
                     className="btn btn-danger"
                     onClick={() => handleCancel(project)}
@@ -385,21 +368,7 @@ function TasksTab() {
         </div>
       )}
 
-      {editTask && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <div className="modal-header">
-              <h3 className="modal-title">עריכת משימה</h3>
-              <button className="modal-close" onClick={() => setEditTask(null)}>✕</button>
-            </div>
-            <TaskForm
-              onSubmit={(data) => handleEdit({ ...editTask, ...data })}
-              onCancel={() => setEditTask(null)}
-              initialData={editTask}
-            />
-          </div>
-        </div>
-      )}
+      
 
       <div className="table-wrapper">
         <table className="data-table">
@@ -447,7 +416,7 @@ function TasksTab() {
                 </td>
                 <td>{task.deadline ? new Date(task.deadline).toLocaleDateString("he-IL") : "-"}</td>
                 <td>
-                  <button className="btn btn-outline" onClick={() => setEditTask(task)}>עריכה</button>
+                  
                   <button
                     className="btn btn-danger"
                     onClick={() => handleCancel(task)}
@@ -612,21 +581,7 @@ function SubTasksTab() {
         </div>
       )}
 
-      {editSubTask && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <div className="modal-header">
-              <h3 className="modal-title">עריכת תת משימה</h3>
-              <button className="modal-close" onClick={() => setEditSubTask(null)}>✕</button>
-            </div>
-            <SubTaskForm 
-              onSubmit={(data) => handleEdit({ ...editSubTask, ...data })}
-              onCancel={() => setEditSubTask(null)}
-              initialData={editSubTask}
-            />
-          </div>
-        </div>
-      )}
+     
 
       <div className="table-wrapper">
         <table className="data-table">
@@ -661,7 +616,7 @@ function SubTasksTab() {
         </span>
       </td>
       <td>
-        <button className="btn btn-outline" onClick={() => setEditSubTask(subTask)}>עריכה</button>
+        
         <button
           className="btn btn-danger"
           onClick={() => handleCancel(subTask)}
@@ -730,7 +685,8 @@ const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
         <label className="form-label">משימה</label>
         <select className="form-input" value={taskId} onChange={e => setTaskId(parseInt(e.target.value))} required>
           <option value="">בחר משימה</option>
-          {tasks.map((t: any) => (
+          {tasks.filter((t: any) => (t.status ?? t.Status) !== 3 && (t.status ?? t.Status) !== 2)  // ✅ לא מבוטלות ולא מושלמות
+          .map((t: any) => (
             <option key={t.id || t.Id} value={t.id || t.Id}>
               {t.title || t.Title}
             </option>
