@@ -122,7 +122,7 @@ const myTasks = (user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo 
 
 const currentSubTasks = selectedTask
   ? subTasks.filter((st: any) => {
-      console.log("subTask:", st);  // ✅ הוסיפי את זה
+      console.log("subTask:", st);  
       return (st.taskId || st.TaskId) === selectedTask.Id;
     })
   : [];
