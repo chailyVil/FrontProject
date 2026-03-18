@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { login } from "../store/slices/authSlice";
 import type { AppDispatch, RootState } from "../store";
 import { Link } from "react-router-dom";
+import { login, fetchMe } from "../store/slices/authSlice";
 
 
 
@@ -56,6 +56,7 @@ function Login() {
   const result = await dispatch(login({ Email: email, Password: password }));
 
   if (login.fulfilled.match(result)) {
+    await dispatch(fetchMe());
     // קבלת נתוני המשתמש מה-Payload שחזר מהשרת
     const user = result.payload.user;
 

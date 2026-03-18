@@ -9,6 +9,7 @@ export interface User {
 export interface Task {
   Id: number;
   ProjectId: number;
+  ProjectName: string;
   Title: string;
   Description: string;
   Expected:number;
@@ -21,6 +22,7 @@ export interface Task {
 
 export interface SubTask {
   Id: number;
+  TaskId: number;  
   TaskName: string;
   Title: string;
   Description: string;

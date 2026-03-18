@@ -18,13 +18,22 @@ export const fetchSubTasks = createAsyncThunk(
     }
   );
   
-  export const updateSubTask = createAsyncThunk(
-    "subTasks/update",
-    async (subTask: SubTask) => {
-      const response = await API.put(`/SubTask/${subTask.Id}`, subTask);
-      return response.data;
-    }
-  );
+export const updateSubTask = createAsyncThunk(
+  "subTasks/update",
+  async (subTask: SubTask) => {
+    const mapped = {
+      id: subTask.Id,
+      taskId: subTask.TaskId,  // צריך להוסיף TaskId ל-types.ts
+      taskName: subTask.TaskName,
+      title: subTask.Title,
+      description: subTask.Description,
+      assignedTo: subTask.AssignedTo,
+      status: subTask.Status,
+    };
+    const response = await API.put(`/SubTask/${subTask.Id}`, mapped);
+    return response.data;
+  }
+);
   
   export const cancelSubTask = createAsyncThunk(
     "subTasks/cancel",

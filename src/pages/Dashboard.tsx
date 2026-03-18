@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '../store';
 import { fetchTasks, updateTask } from '../store/slices/tasksSlice';
 import type { Task } from '../types';
+import { logout } from '../store/slices/authSlice';
 
 // ---- סטטוס צבעים (Status הוא number) ----
 // 0 = Pending, 1 = InProgress, 2 = Done, 3 = Canceled
@@ -32,6 +33,10 @@ const Dashboard: React.FC = () => {
   const [search, setSearch] = useState('');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [takenIds, setTakenIds] = useState<Set<number>>(new Set());
+  const handleLogout = () => {
+  dispatch(logout());
+  navigate('/login');
+};
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -45,10 +50,11 @@ const Dashboard: React.FC = () => {
     }
     const updatedTask: Task = {
       ...task,
-      AssignedTo: user.Id,
+      AssignedTo: (user as any).id || (user as any).Id,  
       Status: 1, // 1 = InProgress
     };
     await dispatch(updateTask(updatedTask));
+    await dispatch(fetchTasks());  
     setTakenIds(prev => new Set(prev).add(task.Id));
     setSuccessMsg(`המשימה "${task.Title}" נלקחה בהצלחה!`);
     setTimeout(() => setSuccessMsg(null), 3500);
@@ -92,23 +98,28 @@ const Dashboard: React.FC = () => {
 
       {/* Header */}
       <header style={headerStyle}>
-        <div>
-          <h1 style={h1Style}>לוח משימות</h1>
-          {user && (
-            <p style={subtitleStyle}>
-              שלום, <strong>{user.NameUser}</strong> — {availableTasks.length} משימות פנויות
-            </p>
-          )}
-        </div>
-        {user && (
-          <button onClick={() => navigate('/my-tasks')} style={myTasksBtnStyle}>
-            המשימות שלי
-            {myTasksCount > 0 && (
-              <span style={badgeCountStyle}>{myTasksCount}</span>
-            )}
-          </button>
+  <div>
+    <h1 style={h1Style}>לוח משימות</h1>
+    {user && (
+      <p style={subtitleStyle}>
+        שלום, <strong>{user.NameUser}</strong> — {availableTasks.length} משימות פנויות
+      </p>
+    )}
+  </div>
+  <div style={{ display: 'flex', gap: '12px' }}>
+    {user && (
+      <button onClick={() => navigate('/my-tasks')} style={myTasksBtnStyle}>
+        המשימות שלי
+        {myTasksCount > 0 && (
+          <span style={badgeCountStyle}>{myTasksCount}</span>
         )}
-      </header>
+      </button>
+    )}
+    <button onClick={handleLogout} style={logoutBtnStyle}>
+      🚪 התנתק
+    </button>
+  </div>
+</header>
 
       {/* Filters */}
       <div style={filtersRow}>
@@ -364,6 +375,17 @@ const badgeCountStyle: React.CSSProperties = {
   padding: '1px 7px',
   fontSize: '0.75rem',
   fontWeight: 700,
+};
+const logoutBtnStyle: React.CSSProperties = {
+  padding: '10px 20px',
+  background: '#fff',
+  color: '#ef4444',
+  border: '1px solid #ef4444',
+  borderRadius: '8px',
+  fontSize: '0.88rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
 };
 
 export default Dashboard;

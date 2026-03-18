@@ -47,9 +47,8 @@ const SubTasksModal = ({
           {subTasks.map(st => (
             <div key={st.Id} style={subTaskRowStyle}>
               <div style={{ flex: 1 }}>
-                <p style={subTaskTitleStyle}>{st.Title}</p>
-                {st.Description && <p style={subTaskDescStyle}>{st.Description}</p>}
-              </div>
+                <p style={subTaskTitleStyle}>{st.Title || (st as any).title}</p>
+                {(st.Description || (st as any).description) && <p style={subTaskDescStyle}>{st.Description || (st as any).description}</p>}                </div>
               <div style={statusBtnsStyle}>
                 {[{ val: 0, label: 'ממתין' }, { val: 1, label: 'בביצוע' }, { val: 2, label: 'הושלם' }].map(s => (
                   <button
@@ -93,10 +92,11 @@ const MyTasks: React.FC = () => {
     dispatch(fetchTasks());
   }, [dispatch]);
 
-  const handleOpenTask = (task: Task) => {
-    setSelectedTask(task);
-    dispatch(fetchSubTasks(task.Id));
-  };
+const handleOpenTask = (task: Task) => {
+  console.log("selectedTask.Id:", task.Id);  // ✅
+  setSelectedTask(task);
+  dispatch(fetchSubTasks());
+};
 
   const handleUpdateSubTaskStatus = async (subTask: SubTask, newStatus: number) => {
     await dispatch(updateSubTask({ ...subTask, Status: newStatus }));
@@ -104,18 +104,19 @@ const MyTasks: React.FC = () => {
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
-  const totalMyTasks = user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === user.Id).length : 0;
-
-  const myTasks = (user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === user.Id) : [])
-    .filter(t =>
+const totalMyTasks = user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === ((user as any).id || (user as any).Id)).length : 0;
+const myTasks = (user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === user.Id) : [])    .filter(t =>
       t.Title?.toLowerCase().includes(search.toLowerCase()) ||
       t.Description?.toLowerCase().includes(search.toLowerCase())
     )
     .filter(t => statusFilter === 'all' || t.Status === Number(statusFilter));
 
-  const currentSubTasks = selectedTask
-    ? subTasks.filter(st => (st as any).TaskId === selectedTask.Id)
-    : [];
+const currentSubTasks = selectedTask
+  ? subTasks.filter((st: any) => {
+      console.log("subTask:", st);  // ✅ הוסיפי את זה
+      return (st.taskId || st.TaskId) === selectedTask.Id;
+    })
+  : [];
 
   return (
     <div style={containerStyle}>

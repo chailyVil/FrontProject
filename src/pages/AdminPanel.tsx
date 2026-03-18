@@ -5,13 +5,17 @@ import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/task
 import { fetchSubTasks, addSubTask, updateSubTask,cancelSubTask } from "../store/slices/subTasksSlice";
 import { fetchUsers } from "../store/slices/usersSlice";
 
+import { useNavigate } from "react-router-dom";
+import { logout } from "../store/slices/authSlice";
+
+
 import { fetchProjects, addProject, updateProject, cancelProject } from "../store/slices/projectSlice";
 import type { Task, Project, SubTask } from "../types";
 
 
 type Tab = "projects" | "tasks" | "subtasks" | "users" | "history";
 
-function AdminPanel() {
+/*function AdminPanel() {
   const [activeTab, setActiveTab] = useState<Tab>("projects");
 
   return (
@@ -49,6 +53,74 @@ function AdminPanel() {
             {item.label}
           </div>
         ))}
+      </div>
+
+      <div className="admin-main">
+        {activeTab === "projects" && <ProjectsTab />}
+        {activeTab === "tasks" && <TasksTab />}
+        {activeTab === "subtasks" && <SubTasksTab />}
+        {activeTab === "users" && <UsersTab />}
+        {activeTab === "history" && <HistoryTab />}
+      </div>
+    </div>
+  );
+}*/
+function AdminPanel() {
+  const [activeTab, setActiveTab] = useState<Tab>("projects");
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
+  return (
+    <div className="admin-layout">
+      <div className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <div className="admin-sidebar-title">לוח מנהל</div>
+        </div>
+        <div className="nav-section-title">ניהול</div>
+        {[
+          { id: "projects", label: "פרויקטים", icon: "📁" },
+          { id: "tasks", label: "משימות", icon: "✓" },
+          { id: "subtasks", label: "תתי משימות", icon: "◦" },
+        ].map((item) => (
+          <div
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? "active" : ""}`}
+            onClick={() => setActiveTab(item.id as Tab)}
+          >
+            <span>{item.icon}</span>
+            {item.label}
+          </div>
+        ))}
+        <div className="nav-section-title">צוות</div>
+        {[
+          { id: "users", label: "עובדים", icon: "👥" },
+          { id: "history", label: "ביצועים", icon: "📊" },
+        ].map((item) => (
+          <div
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? "active" : ""}`}
+            onClick={() => setActiveTab(item.id as Tab)}
+          >
+            <span>{item.icon}</span>
+            {item.label}
+          </div>
+        ))}
+
+        {/* ✅ כפתור התנתקות */}
+        <div
+          className="nav-item"
+          onClick={handleLogout}
+          style={{ color: '#ef4444', marginTop: 'auto', cursor: 'pointer' }}
+        >
+          <span>🚪</span>
+          התנתק
+        </div>
+
       </div>
 
       <div className="admin-main">
@@ -484,13 +556,19 @@ const handleSubmit = (e: React.FormEvent) => {
 
 function SubTasksTab() {
   const dispatch = useDispatch<AppDispatch>();
+  const { users } = useSelector((state: RootState) => state.users);
   const { subTasks, loading, error } = useSelector((state: RootState) => state.subTasks);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editSubTask, setEditSubTask] = useState<any>(null);
   useEffect(() => {
     dispatch(fetchSubTasks());
+    dispatch(fetchUsers());
   }, []);
-
+  const getUserName = (id: number | null) => {
+  if (!id) return "-";
+  const user = users.find((u: any) => (u.id || u.Id) === id);
+  return user ? (user.nameUser || user.NameUser) : "-";
+};
   const handleAdd = async (task: any) => {
     await dispatch(addSubTask(task));
     await dispatch(fetchSubTasks());
@@ -561,34 +639,35 @@ function SubTasksTab() {
             </tr>
           </thead>
           <tbody>
-            {subTasks.map((subTask: any) => (
-              <tr key={subTask.id || subTask.Id}>
-                <td>{subTask.title || subTask.Title}</td>
-                <td>{subTask.taskName || subTask.TaskName}</td>
-                
-                <td>
-                  <span className={`badge ${
-                    (subTask.status || subTask.Status) === 1 ? "badge-progress" :
-                    (subTask.status || subTask.Status) === 2 ? "badge-done" :
-                    (subTask.status || subTask.Status) === 3 ? "badge-canceled" :
-                    "badge-open"
-                  }`}>
-                    {(subTask.status || subTask.Status) === 1 ? "בביצוע" :
-                     (subTask.status || subTask.Status) === 2 ? "הושלם" :
-                     (subTask.status || subTask.Status) === 3 ? "בוטל" : "פתוח"}
-                  </span>
-                </td>
-                <td>
-                  <button className="btn btn-outline" onClick={() => setEditSubTask(subTask)}>עריכה</button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleCancel(subTask)}
-                    disabled={(subTask.status || subTask.Status) === 3}
-                  >ביטול</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+  {subTasks.map((subTask: any) => (
+    <tr key={subTask.id || subTask.Id}>
+      <td>{subTask.title || subTask.Title}</td>
+      <td>{subTask.description || subTask.Description}</td>
+      <td>{subTask.taskName || subTask.TaskName}</td>
+      <td>{getUserName(subTask.assignedTo ?? subTask.AssignedTo)}</td>
+      <td>
+        <span className={`badge ${
+          (subTask.status ?? subTask.Status) === 1 ? "badge-progress" :
+          (subTask.status ?? subTask.Status) === 2 ? "badge-done" :
+          (subTask.status ?? subTask.Status) === 3 ? "badge-canceled" :
+          "badge-open"
+        }`}>
+          {(subTask.status ?? subTask.Status) === 1 ? "בביצוע" :
+           (subTask.status ?? subTask.Status) === 2 ? "הושלם" :
+           (subTask.status ?? subTask.Status) === 3 ? "בוטל" : "פתוח"}
+        </span>
+      </td>
+      <td>
+        <button className="btn btn-outline" onClick={() => setEditSubTask(subTask)}>עריכה</button>
+        <button
+          className="btn btn-danger"
+          onClick={() => handleCancel(subTask)}
+          disabled={(subTask.status ?? subTask.Status) === 3}
+        >ביטול</button>
+      </td>
+    </tr>
+  ))}
+</tbody>
         </table>
       </div>
     </div>
@@ -630,7 +709,7 @@ const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
       description,
       status: parseInt(status),
       deadline: new Date(deadline),
-      assignedTo: (user as any)?.id || (user as any)?.Id || 2,
+      assignedTo:null,
     });
   };
 
