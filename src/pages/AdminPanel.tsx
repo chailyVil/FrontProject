@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store";
 import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/tasksSlice";
 import { fetchSubTasks, addSubTask, updateSubTask,cancelSubTask } from "../store/slices/subTasksSlice";
-import { fetchUsers } from "../store/slices/usersSlice";
+import { fetchUsers ,deactivateUser} from "../store/slices/usersSlice";
+import { fetchHistory } from "../store/slices/historySlice";
 
 import { useNavigate } from "react-router-dom";
 import { logout } from "../store/slices/authSlice";
@@ -415,7 +416,8 @@ function TasksTab() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task: any) => (
+            {tasks.filter((task: any) => (task.status ?? task.Status) !== 3)
+            .map((task: any) => (
               <tr key={task.id || task.Id}>
                 <td>{task.title || task.Title}</td>
                 <td>{task.description || task.Description}</td>
@@ -639,7 +641,8 @@ function SubTasksTab() {
             </tr>
           </thead>
           <tbody>
-  {subTasks.map((subTask: any) => (
+  {subTasks.filter((subTask: any) => (subTask.status ?? subTask.Status) !== 3)
+  .map((subTask: any) => (
     <tr key={subTask.id || subTask.Id}>
       <td>{subTask.title || subTask.Title}</td>
       <td>{subTask.description || subTask.Description}</td>
@@ -790,6 +793,21 @@ const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
 }*/
 
 function UsersTab() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { users, loading, error } = useSelector((state: RootState) => state.users);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, []);
+
+  const handleDeactivate = async (user: any) => {
+    await dispatch(deactivateUser(user));
+    await dispatch(fetchUsers());
+  };
+
+  if (loading) return <div className="loading">טוען...</div>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+
   return (
     <div>
       <div className="page-header">
@@ -807,15 +825,30 @@ function UsersTab() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>יוסי כהן</td>
-              <td>yosi@gmail.com</td>
-              <td>user</td>
-              <td><span className="badge badge-done">פעיל</span></td>
-              <td>
-                <button className="btn btn-danger">השבת</button>
-              </td>
-            </tr>
+            {users
+                .filter((user: any) => (user.role || user.Role) !== "admin")
+                .filter((user: any) => (user.isActive ?? user.IsActive) === true)
+                .map((user: any) => (
+              <tr key={user.id || user.Id}>
+                <td>{user.nameUser || user.NameUser}</td>
+                <td>{user.email || user.Email}</td>
+                <td>{user.role === "admin" ? "מנהל" : "עובד"}</td>
+                <td>
+                  <span className={`badge ${(user.isActive ?? user.IsActive) ? "badge-done" : "badge-canceled"}`}>
+                    {(user.isActive ?? user.IsActive) ? "פעיל" : "מושבת"}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDeactivate(user)}
+                    disabled={!(user.isActive ?? user.IsActive)}
+                  >
+                    השבת
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -824,17 +857,59 @@ function UsersTab() {
 }
 
 function HistoryTab() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { tasks } = useSelector((state: RootState) => state.tasks);
+  const { subTasks } = useSelector((state: RootState) => state.subTasks);
+  const { users } = useSelector((state: RootState) => state.users);
+
+  useEffect(() => {
+    dispatch(fetchTasks());
+    dispatch(fetchSubTasks());
+    dispatch(fetchUsers());
+  }, []);
+
+  // סטטיסטיקות כלליות
+  const completedTasks = tasks.filter((t: any) => (t.status ?? t.Status) === 2).length;
+  const inProgressTasks = tasks.filter((t: any) => (t.status ?? t.Status) === 1).length;
+  const canceledTasks = tasks.filter((t: any) => (t.status ?? t.Status) === 3).length;
+  const completedSubTasks = subTasks.filter((s: any) => (s.status ?? s.Status) === 2).length;
+
+  // ביצועי עובדים
+  const userStats = users.map((u: any) => {
+    const userId = u.id || u.Id;
+    const userName = u.nameUser || u.NameUser;
+    const myTasks = tasks.filter((t: any) => (t.AssignedTo ?? t.assignedTo) === userId);
+    const completed = myTasks.filter((t: any) => (t.status ?? t.Status) === 2).length;
+    const inProgress = myTasks.filter((t: any) => (t.status ?? t.Status) === 1).length;
+    const total = myTasks.length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { userId, userName, total, completed, inProgress, percent };
+  }).filter(u => u.total > 0);
+
+  // התקדמות משימות
+  const taskStats = tasks.map((t: any) => {
+    const taskId = t.Id ?? t.id;
+    const title = t.Title ?? t.title;
+    const mySubTasks = subTasks.filter((s: any) => (s.taskId || s.TaskId) === taskId);
+    const completed = mySubTasks.filter((s: any) => (s.status ?? s.Status) === 2).length;
+    const total = mySubTasks.length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { taskId, title, total, completed, percent };
+  }).filter(t => t.total > 0);
+
   return (
     <div>
       <div className="page-header">
         <h2 className="page-title">ביצועי עובדים</h2>
       </div>
+
+      {/* כרטיסיות סטטיסטיקות */}
       <div className="stats-grid">
         {[
-          { label: "משימות הושלמו", value: "24" },
-          { label: "בביצוע", value: "8" },
-          { label: "ממוצע ימים", value: "4.2" },
-          { label: "בוטלו", value: "3" },
+          { label: "משימות הושלמו", value: completedTasks },
+          { label: "בביצוע", value: inProgressTasks },
+          { label: "תתי משימות הושלמו", value: completedSubTasks },
+          { label: "בוטלו", value: canceledTasks },
         ].map((s) => (
           <div key={s.label} className="stat-card">
             <div className="stat-label">{s.label}</div>
@@ -842,30 +917,95 @@ function HistoryTab() {
           </div>
         ))}
       </div>
+
+      {/* טבלת ביצועי עובדים */}
+      <h3 className="page-title" style={{ marginTop: '32px', marginBottom: '16px' }}>ביצועי עובדים</h3>
       <div className="table-wrapper">
         <table className="data-table">
           <thead>
             <tr>
               <th>עובד</th>
-              <th>תת משימה</th>
-              <th>סטטוס ישן</th>
-              <th>סטטוס חדש</th>
-              <th>תאריך</th>
+              <th>משימות שלקח</th>
+              <th>הושלמו</th>
+              <th>בביצוע</th>
+              <th>אחוז השלמה</th>
             </tr>
           </thead>
           <tbody>
+            {userStats.length === 0 ? (
+              <tr><td colSpan={5} style={{ textAlign: 'center' }}>אין נתונים</td></tr>
+            ) : (
+              userStats.map(u => (
+                <tr key={u.userId}>
+                  <td>{u.userName}</td>
+                  <td>{u.total}</td>
+                  <td>{u.completed}</td>
+                  <td>{u.inProgress}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{
+                        width: '100px', height: '8px',
+                        background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${u.percent}%`, height: '100%',
+                          background: u.percent === 100 ? '#15803d' : '#3b82f6',
+                          borderRadius: '4px'
+                        }} />
+                      </div>
+                      <span>{u.percent}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* טבלת התקדמות משימות */}
+      <h3 className="page-title" style={{ marginTop: '32px', marginBottom: '16px' }}>התקדמות משימות</h3>
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
             <tr>
-              <td>יוסי כהן</td>
-              <td>הגדרת endpoints</td>
-              <td><span className="badge badge-progress">בביצוע</span></td>
-              <td><span className="badge badge-done">הושלם</span></td>
-              <td>15/03/2026</td>
+              <th>משימה</th>
+              <th>סה"כ תתי משימות</th>
+              <th>הושלמו</th>
+              <th>אחוז התקדמות</th>
             </tr>
+          </thead>
+          <tbody>
+            {taskStats.length === 0 ? (
+              <tr><td colSpan={4} style={{ textAlign: 'center' }}>אין נתונים</td></tr>
+            ) : (
+              taskStats.map(t => (
+                <tr key={t.taskId}>
+                  <td>{t.title}</td>
+                  <td>{t.total}</td>
+                  <td>{t.completed}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{
+                        width: '100px', height: '8px',
+                        background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${t.percent}%`, height: '100%',
+                          background: t.percent === 100 ? '#15803d' : '#3b82f6',
+                          borderRadius: '4px'
+                        }} />
+                      </div>
+                      <span>{t.percent}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
-
 export default AdminPanel;

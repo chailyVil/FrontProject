@@ -56,10 +56,10 @@ const SubTasksModal = ({
                     onClick={() => onUpdateStatus(st, s.val)}
                     style={{
                       ...statusBtnBase,
-                      background: st.Status === s.val ? statusConfig[s.val].bg : 'transparent',
-                      color: st.Status === s.val ? statusConfig[s.val].color : '#9ca3af',
-                      borderColor: st.Status === s.val ? statusConfig[s.val].color : '#e5e7eb',
-                      fontWeight: st.Status === s.val ? 700 : 400,
+                      background: (st.Status ?? (st as any).status) === s.val ? statusConfig[s.val].bg : 'transparent',
+                      color: (st.Status ?? (st as any).status) === s.val ? statusConfig[s.val].color : '#9ca3af',
+                      borderColor: (st.Status ?? (st as any).status) === s.val ? statusConfig[s.val].color : '#e5e7eb',
+                      fontWeight: (st.Status ?? (st as any).status) === s.val ? 700 : 400,
                     }}
                   >
                     {s.label}
@@ -98,11 +98,19 @@ const handleOpenTask = (task: Task) => {
   dispatch(fetchSubTasks());
 };
 
-  const handleUpdateSubTaskStatus = async (subTask: SubTask, newStatus: number) => {
-    await dispatch(updateSubTask({ ...subTask, Status: newStatus }));
-    setSuccessMsg('הסטטוס עודכן בהצלחה');
-    setTimeout(() => setSuccessMsg(null), 3000);
-  };
+const handleUpdateSubTaskStatus = async (subTask: any, newStatus: number) => {
+  await dispatch(updateSubTask({
+    Id: subTask.id || subTask.Id,
+    TaskId: subTask.taskId || subTask.TaskId,
+    TaskName: subTask.taskName || subTask.TaskName,
+    Title: subTask.title || subTask.Title,
+    Description: subTask.description || subTask.Description,
+    AssignedTo: subTask.assignedTo || subTask.AssignedTo,
+    Status: newStatus,
+  } as any));
+  setSuccessMsg('הסטטוס עודכן בהצלחה');
+  setTimeout(() => setSuccessMsg(null), 3000);
+};
 
 const totalMyTasks = user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === ((user as any).id || (user as any).Id)).length : 0;
 const myTasks = (user ? tasks.filter(t => t.AssignedTo !== null && t.AssignedTo === user.Id) : [])    .filter(t =>

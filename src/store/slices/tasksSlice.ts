@@ -43,9 +43,8 @@ export const updateTask = createAsyncThunk(
 export const cancelTask = createAsyncThunk(
     "tasks/cancel",
     async (task: Task) => {
-      const updatedTask = { ...task, Status: "Canceled" };
-      const response = await API.put(`/TaskItem/${task.Id}`, updatedTask);
-      return response.data;
+      const response = await API.delete(`/TaskItem/${task.Id}`);
+      return { ...task, Status: 3 };
     }
 );
 

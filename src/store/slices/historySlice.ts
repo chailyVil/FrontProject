@@ -1,11 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { HistoryState } from "../../types";
 import API from "../../services/api";
-
 export const fetchHistory = createAsyncThunk(
     "history/fetchAll",
-    async (subTaskId: number) => {
-      const response = await API.get(`/History/${subTaskId}`);
+    async () => {
+      const response = await API.get('/History');
       return response.data;
     }
 );

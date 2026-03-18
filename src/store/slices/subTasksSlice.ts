@@ -35,15 +35,14 @@ export const updateSubTask = createAsyncThunk(
   }
 );
   
-  export const cancelSubTask = createAsyncThunk(
+export const cancelSubTask = createAsyncThunk(
     "subTasks/cancel",
-    async (subTask: SubTask) => {
-      const updatedSubTask = { ...subTask, Status: "Canceled" };
-      const response = await API.put(`/SubTask/${subTask.Id}`, updatedSubTask);
-      return response.data;
+    async (subTask: any) => {
+      const id = subTask.id || subTask.Id;
+      const response = await API.delete(`/SubTask/${id}`);
+      return { ...subTask, Status: 3, status: 3 };
     }
-  );
-  
+);
   const initialState: SubTasksState = {
     subTasks: [],
     loading: false,
@@ -71,14 +70,17 @@ export const updateSubTask = createAsyncThunk(
         .addCase(addSubTask.fulfilled, (state, action) => {
           state.subTasks.push(action.payload);
         })
-        .addCase(updateSubTask.fulfilled, (state, action) => {
-          const index = state.subTasks.findIndex(s => s.Id === action.payload.Id);
-          if (index !== -1) state.subTasks[index] = action.payload;
-        })
+      .addCase(updateSubTask.fulfilled, (state, action) => {
+  const t = action.payload;
+  const index = state.subTasks.findIndex((s: any) => (s.id || s.Id) === (t.id || t.Id));
+  if (index !== -1) state.subTasks[index] = action.payload;
+  // אם לא נמצא — לא מוסיפים!
+})
         .addCase(cancelSubTask.fulfilled, (state, action) => {
-          const index = state.subTasks.findIndex(s => s.Id === action.payload.Id);
-          if (index !== -1) state.subTasks[index] = action.payload;
-        })
+  const t = action.payload as any;
+  const index = state.subTasks.findIndex((s: any) => (s.id || s.Id) === (t.id || t.Id));
+  if (index !== -1) state.subTasks[index] = action.payload;
+})
     },
   });
   

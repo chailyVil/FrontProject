@@ -95,4 +95,5 @@ export interface RegisterDTO {
   NameUser: string;
   Email: string;
   Password: string;
+  Role: string;
 }

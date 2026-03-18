@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { register } from "../store/slices/authSlice";
+
 import type { AppDispatch } from "../store";
+import { register, fetchMe } from "../store/slices/authSlice";
 
 function Register() {
   const dispatch = useDispatch<AppDispatch>();
@@ -58,11 +59,18 @@ function Register() {
       NameUser: nameUser,
       Email: email,
       Password: password,
+      Role: "user",
     }));
 
     if (register.fulfilled.match(result)) {
-      navigate("/login");
-    }
+  await dispatch(fetchMe());  // ✅
+  const user = result.payload.user;
+  if (user?.role === "admin") {
+    navigate("/admin");
+  } else {
+    navigate("/dashboard");
+  }
+}
   };
 
   return (
