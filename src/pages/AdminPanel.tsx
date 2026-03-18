@@ -695,11 +695,11 @@ function SubTaskForm({ onSubmit, onCancel, initialData }: {
   const [description, setDescription] = useState(initialData?.description || initialData?.Description || "");
   const [taskId, setTaskId] = useState(initialData?.taskId || 0);
   const [status, setStatus] = useState(initialData?.status?.toString() || "0");
-  const [deadline, setDeadline] = useState(
+  /*const [deadline, setDeadline] = useState(
     (initialData?.deadline || initialData?.Deadline)
       ? new Date(initialData.deadline || initialData.Deadline).toISOString().split("T")[0]
       : ""
-  );
+  );*/
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -711,7 +711,7 @@ const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
       title,
       description,
       status: parseInt(status),
-      deadline: new Date(deadline),
+      //deadline: new Date(deadline),
       assignedTo:null,
     });
   };
@@ -746,10 +746,7 @@ const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
           <option value="3">בוטל</option>
         </select>
       </div>
-      <div className="form-group">
-        <label className="form-label">דדליין</label>
-        <input className="form-input" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} required />
-      </div>
+      
       <div className="modal-footer">
         <button type="button" className="btn btn-outline" onClick={onCancel}>ביטול</button>
         <button type="submit" className="btn btn-primary">שמור</button>
