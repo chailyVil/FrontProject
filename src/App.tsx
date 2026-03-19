@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "./store";
@@ -24,16 +24,37 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return children;
 }
 
+
+// ברירת מחדל לפי סוג משתמש
+function HomeRedirect() {
+  const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
+  if (!isLoggedIn) return <Navigate to="/login" />;
+  if (user?.role === "admin") return <Navigate to="/admin" />;
+  return <Navigate to="/dashboard" />;
+}
+
 function App() {
   const dispatch = useDispatch<AppDispatch>();
   const { token } = useSelector((state: RootState) => state.auth);
+  const [authReady, setAuthReady] = useState(false);
 
   // אחרי רענון — משחזר את היוזר לפי ה-token
   useEffect(() => {
+    let isMounted = true;
     if (token) {
-      dispatch(fetchMe());
+      Promise.resolve(dispatch(fetchMe()))
+        .finally(() => {
+          if (isMounted) setAuthReady(true);
+        });
+    } else {
+      setAuthReady(true);
     }
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, token]);
+
+  if (!authReady) return <div className="loading">טוען...</div>;
 
   return (
     <BrowserRouter>
@@ -66,7 +87,8 @@ function App() {
           </AdminRoute>
         } />
 
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<HomeRedirect />} />
+              <Route path="*" element={<HomeRedirect />} />
       </Routes>
     </BrowserRouter>
   );
