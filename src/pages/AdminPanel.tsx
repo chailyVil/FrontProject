@@ -614,6 +614,9 @@ const handleSubmit = (e: React.FormEvent) => {
       expected: expected,
       assignedTo: null,
     });
+    } catch (err: any) {
+      setError(getErrorMessage(err, "שגיאה ביצירת המשימה"));
+    }
   };
 
   return (

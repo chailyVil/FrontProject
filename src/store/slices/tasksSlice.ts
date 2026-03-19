@@ -33,7 +33,7 @@ export const addTask = createAsyncThunk(
       }
 
     }
-  }
+  
 );
 
 export const updateTask = createAsyncThunk(
