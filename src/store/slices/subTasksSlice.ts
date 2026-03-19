@@ -2,45 +2,66 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { SubTasksState, SubTask } from "../../types";
 import API from "../../services/api";
 
+const getErrorMessage = (err: any, fallback: string) => {
+  const message = err?.response?.data?.message || err?.response?.data?.error || err?.message;
+  return message || fallback;
+};
+
 export const fetchSubTasks = createAsyncThunk(
   "subTasks/fetchAll",
-  async () => {
-    const response = await API.get("/SubTask");
-    return response.data;
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await API.get("/SubTask");
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(getErrorMessage(err, "שגיאה בטעינת תתי משימות"));
+    }
   }
 );
   
   export const addSubTask = createAsyncThunk(
     "subTasks/add",
-    async (subTask: Partial<SubTask>) => {
-      const response = await API.post("/SubTask", subTask);
-      return response.data;
+    async (subTask: Partial<SubTask>, { rejectWithValue }) => {
+      try {
+        const response = await API.post("/SubTask", subTask);
+        return response.data;
+      } catch (err: any) {
+        return rejectWithValue(getErrorMessage(err, "שגיאה בהוספת תת משימה"));
+      }
     }
   );
   
 export const updateSubTask = createAsyncThunk(
   "subTasks/update",
-  async (subTask: SubTask) => {
-    const mapped = {
-      id: subTask.Id,
-      taskId: subTask.TaskId,  // צריך להוסיף TaskId ל-types.ts
-      taskName: subTask.TaskName,
-      title: subTask.Title,
-      description: subTask.Description,
-      assignedTo: subTask.AssignedTo,
-      status: subTask.Status,
-    };
-    const response = await API.put(`/SubTask/${subTask.Id}`, mapped);
-    return response.data;
+  async (subTask: SubTask, { rejectWithValue }) => {
+    try {
+      const mapped = {
+        id: subTask.Id,
+        taskId: subTask.TaskId,  // צריך להוסיף TaskId ל-types.ts
+        taskName: subTask.TaskName,
+        title: subTask.Title,
+        description: subTask.Description,
+        assignedTo: subTask.AssignedTo,
+        status: subTask.Status,
+      };
+      const response = await API.put(`/SubTask/${subTask.Id}`, mapped);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(getErrorMessage(err, "שגיאה בעדכון תת משימה"));
+    }
   }
 );
   
 export const cancelSubTask = createAsyncThunk(
     "subTasks/cancel",
-    async (subTask: any) => {
-      const id = subTask.id || subTask.Id;
-      const response = await API.delete(`/SubTask/${id}`);
-      return { ...subTask, Status: 3, status: 3 };
+    async (subTask: any, { rejectWithValue }) => {
+      try {
+        const id = subTask.id || subTask.Id;
+        const response = await API.delete(`/SubTask/${id}`);
+        return { ...subTask, Status: 3, status: 3 };
+      } catch (err: any) {
+        return rejectWithValue(getErrorMessage(err, "שגיאה בביטול תת משימה"));
+      }
     }
 );
   const initialState: SubTasksState = {
@@ -65,7 +86,7 @@ export const cancelSubTask = createAsyncThunk(
         })
         .addCase(fetchSubTasks.rejected, (state, action) => {
           state.loading = false;
-          state.error = action.error.message || "שגיאה בטעינת תתי משימות";
+          state.error = (action.payload as string) || action.error.message || "שגיאה בטעינת תתי משימות";
         })
         .addCase(addSubTask.fulfilled, (state, action) => {
           state.subTasks.push(action.payload);
