@@ -22,16 +22,13 @@ export const fetchTasks = createAsyncThunk(
 );
 
 export const addTask = createAsyncThunk(
-
-    "tasks/add",
-    async (task: Partial<Task>, { rejectWithValue }) => {
-      try {
-        const response = await API.post("/TaskItem", task);
-        return response.data;
-      } catch (err: any) {
-        return rejectWithValue(getErrorMessage(err, "שגיאה בהוספת משימה"));
-      }
-
+  "tasks/add",
+  async (task: Partial<Task>, { rejectWithValue }) => {
+    try {
+      const response = await API.post("/TaskItem", task);
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(getErrorMessage(err, "שגיאה בהוספת משימה"));
     }
   
 );

@@ -4,14 +4,13 @@ import type { AppDispatch, RootState } from "../store";
 import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/tasksSlice";
 import { fetchSubTasks, addSubTask, updateSubTask,cancelSubTask } from "../store/slices/subTasksSlice";
 import { fetchUsers ,deactivateUser} from "../store/slices/usersSlice";
-import { fetchHistory } from "../store/slices/historySlice";
 
 import { useNavigate } from "react-router-dom";
 import { logout } from "../store/slices/authSlice";
 
 
 import { fetchProjects, addProject, updateProject, cancelProject } from "../store/slices/projectSlice";
-import type { Task, Project, SubTask } from "../types";
+import type { Project } from "../types";
 
 
 type Tab = "projects" | "tasks" | "subtasks" | "users" | "history";
@@ -577,8 +576,6 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
     useEffect(() => {
     dispatch(fetchProjects());
     }, []);
-  const { user } = useSelector((state: RootState) => state.auth);
-  const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(initialData?.title || initialData?.Title || "");
   const [description, setDescription] = useState(initialData?.description || initialData?.Description || "");
   const projects = useSelector((state: RootState) => state.projects.projects);
@@ -594,7 +591,6 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
 
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
     // 1. מחפשים את הפרויקט הנבחר מתוך רשימת הפרויקטים כדי לחלץ את השם שלו
     const selectedProject = projects.find((p: any) => (p.id || p.Id) === projectId);
     
@@ -796,7 +792,6 @@ function SubTaskForm({ onSubmit, onCancel, initialData }: {
 }) {
   const dispatch = useDispatch<AppDispatch>();
   const { tasks } = useSelector((state: RootState) => state.tasks);
-  const { user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     dispatch(fetchTasks());
