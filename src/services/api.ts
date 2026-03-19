@@ -21,6 +21,11 @@ API.interceptors.response.use(
       localStorage.removeItem("token");  // ✅ מוחק את הטוקן
       window.location.href = "/login";   // ✅ מנתב ללוגין
     }
+    // 2. חילוץ הודעת השגיאה מהשרת או הודעה כללית 
+    const message = error.response?.data?.message || "התרחשה שגיאה בתקשורת עם השרת";
+
+    // 3. כאן אפשר להפעיל ספריית התראות (כמו react-toastify)
+    // alert(message); // זמני, עד שתחליט על ספריית עיצוב [cite: 25]
     return Promise.reject(error);
   }
 );

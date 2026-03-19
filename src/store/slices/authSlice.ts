@@ -37,6 +37,7 @@ const initialState: AuthState = {
   isLoggedIn: !!token,
   loading: false,
   error: null,
+  isInitialized: !token,
 };
 
 const authSlice = createSlice({
@@ -47,6 +48,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isLoggedIn = false;
+      state.isInitialized = true;
       localStorage.removeItem("token");
     },
   },
@@ -88,6 +90,7 @@ const authSlice = createSlice({
 
       // fetchMe — שחזור יוזר אחרי רענון
       .addCase(fetchMe.fulfilled, (state, action) => {
+        state.isInitialized = true;
         // השרת מחזיר camelCase, ממפים ל-PascalCase
         state.user = {
           Id: action.payload.id,
@@ -99,6 +102,7 @@ const authSlice = createSlice({
         state.isLoggedIn = true;
       })
       .addCase(fetchMe.rejected, (state) => {
+        state.isInitialized = true;
         // token לא תקף — ניקוי מלא
         state.user = null;
         state.token = null;

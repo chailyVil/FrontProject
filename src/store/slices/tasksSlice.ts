@@ -4,28 +4,37 @@ import API from "../../services/api";
 
 export const fetchTasks = createAsyncThunk(
     "tasks/fetchAll", 
-    async () => {
+    async (_, { rejectWithValue }) => {
+        try {
       const response = await API.get("/TaskItem");
       return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || "שגיאה בטעינת משימות");
+    }
     }
 );
 
 export const addTask = createAsyncThunk(
-    "tasks/add",
-    async (task: Partial<Task>) => {
+  "tasks/add",
+  async (task: Partial<Task>, { rejectWithValue }) => {
+    try {
       const response = await API.post("/TaskItem", task);
       return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || "שגיאה בהוספת משימה");
     }
+  }
 );
 
 export const updateTask = createAsyncThunk(
     "tasks/update",
-    async (task: Task) => {
-      const mapped = {
-        id: task.Id,
-        projectId: task.ProjectId,
-        projectName: task.ProjectName,
-        title: task.Title,
+    async (task: Task, { rejectWithValue }) => {
+      try {
+        const mapped = {
+          id: task.Id,
+          projectId: task.ProjectId,
+          projectName: task.ProjectName,
+          title: task.Title,
         description: task.Description,
         expected: task.Expected,
         assignedTo: task.AssignedTo,
@@ -37,14 +46,21 @@ export const updateTask = createAsyncThunk(
       console.log("sending task:", mapped);  // ✅ הוסיפי את זה
       const response = await API.put(`/TaskItem/${task.Id}`, mapped); // ✅
       return response.data;
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || "שגיאה בעדכון משימה");
+        }
     }
 );
 
 export const cancelTask = createAsyncThunk(
     "tasks/cancel",
-    async (task: Task) => {
-      const response = await API.delete(`/TaskItem/${task.Id}`);
-      return { ...task, Status: 3 };
+    async (task: Task, { rejectWithValue }) => {
+      try {
+        const response = await API.delete(`/TaskItem/${task.Id}`);
+        return { ...task, Status: 3 };
+      } catch (err: any) {
+        return rejectWithValue(err.response?.data?.message || "שגיאה בביטול משימה");
+      }
     }
 );
 

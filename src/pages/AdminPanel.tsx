@@ -442,6 +442,7 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
     dispatch(fetchProjects());
     }, []);
   const { user } = useSelector((state: RootState) => state.auth);
+  const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(initialData?.title || initialData?.Title || "");
   const [description, setDescription] = useState(initialData?.description || initialData?.Description || "");
   const projects = useSelector((state: RootState) => state.projects.projects);
@@ -457,7 +458,7 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
 
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+    try {
     // 1. מחפשים את הפרויקט הנבחר מתוך רשימת הפרויקטים כדי לחלץ את השם שלו
     const selectedProject = projects.find((p: any) => (p.id || p.Id) === projectId);
     
