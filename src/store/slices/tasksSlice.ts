@@ -2,26 +2,36 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { TasksState, Task } from "../../types";
 import API from "../../services/api";
 
+const getErrorMessage = (err: any, fallback: string) => {
+  const message = err?.response?.data?.message || err?.response?.data?.error || err?.message;
+  return message || fallback;
+};
+
 export const fetchTasks = createAsyncThunk(
     "tasks/fetchAll", 
     async (_, { rejectWithValue }) => {
-        try {
-      const response = await API.get("/TaskItem");
-      return response.data;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "שגיאה בטעינת משימות");
-    }
+
+      try {
+        const response = await API.get("/TaskItem");
+        return response.data;
+      } catch (err: any) {
+        return rejectWithValue(getErrorMessage(err, "שגיאה בטעינת משימות"));
+      }
+
     }
 );
 
 export const addTask = createAsyncThunk(
-  "tasks/add",
-  async (task: Partial<Task>, { rejectWithValue }) => {
-    try {
-      const response = await API.post("/TaskItem", task);
-      return response.data;
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || "שגיאה בהוספת משימה");
+
+    "tasks/add",
+    async (task: Partial<Task>, { rejectWithValue }) => {
+      try {
+        const response = await API.post("/TaskItem", task);
+        return response.data;
+      } catch (err: any) {
+        return rejectWithValue(getErrorMessage(err, "שגיאה בהוספת משימה"));
+      }
+
     }
   }
 );
@@ -35,20 +45,22 @@ export const updateTask = createAsyncThunk(
           projectId: task.ProjectId,
           projectName: task.ProjectName,
           title: task.Title,
-        description: task.Description,
-        expected: task.Expected,
-        assignedTo: task.AssignedTo,
-        priority: task.Priority,
-        status: task.Status,
-        startedAt: task.StartedAt,
-        deadline: task.Deadline,
-      };
-      console.log("sending task:", mapped);  // ✅ הוסיפי את זה
-      const response = await API.put(`/TaskItem/${task.Id}`, mapped); // ✅
-      return response.data;
-        } catch (err: any) {
-            return rejectWithValue(err.response?.data?.message || "שגיאה בעדכון משימה");
-        }
+
+          description: task.Description,
+          expected: task.Expected,
+          assignedTo: task.AssignedTo,
+          priority: task.Priority,
+          status: task.Status,
+          startedAt: task.StartedAt,
+          deadline: task.Deadline,
+        };
+        console.log("sending task:", mapped);  // ✅ הוסיפי את זה
+        const response = await API.put(`/TaskItem/${task.Id}`, mapped); // ✅
+        return response.data;
+      } catch (err: any) {
+        return rejectWithValue(getErrorMessage(err, "שגיאה בעדכון משימה"));
+      }
+
     }
 );
 
@@ -59,7 +71,9 @@ export const cancelTask = createAsyncThunk(
         const response = await API.delete(`/TaskItem/${task.Id}`);
         return { ...task, Status: 3 };
       } catch (err: any) {
-        return rejectWithValue(err.response?.data?.message || "שגיאה בביטול משימה");
+
+        return rejectWithValue(getErrorMessage(err, "שגיאה בביטול משימה"));
+
       }
     }
 );
@@ -98,7 +112,7 @@ const tasksSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "שגיאה בטעינת משימות";
+        state.error = (action.payload as string) || action.error.message || "שגיאה בטעינת משימות";
       })
       .addCase(addTask.fulfilled, (state, action) => {
         const t = action.payload;

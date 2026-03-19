@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, createContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../store";
 import { fetchTasks, addTask, updateTask,cancelTask } from "../store/slices/tasksSlice";
@@ -16,11 +16,113 @@ import type { Task, Project, SubTask } from "../types";
 
 type Tab = "projects" | "tasks" | "subtasks" | "users" | "history";
 
+type ToastType = "success" | "error" | "info";
+
+type Toast = {
+  id: number;
+  message: string;
+  type: ToastType;
+};
+
+const ToastContext = createContext<{
+  notify: (message: string, type?: ToastType, duration?: number) => void;
+} | null>(null);
+
+function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const notify = (message: string, type: ToastType = "info", duration = 3000) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    if (duration > 0) {
+      window.setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, duration);
+    }
+  };
+
+  const dismiss = (id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const containerStyle: React.CSSProperties = {
+    position: "fixed",
+    top: 16,
+    right: 16,
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    zIndex: 9999,
+  };
+
+  const toastStyle = (type: ToastType): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "10px 14px",
+    borderRadius: 8,
+    color: "#fff",
+    background:
+      type === "success" ? "#16a34a" : type === "error" ? "#dc2626" : "#2563eb",
+    boxShadow: "0 6px 18px rgba(0, 0, 0, 0.2)",
+    minWidth: 220,
+    maxWidth: 320,
+    fontSize: 14,
+  });
+
+  const closeStyle: React.CSSProperties = {
+    marginLeft: "auto",
+    border: "none",
+    background: "transparent",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 16,
+    lineHeight: 1,
+  };
+
+  return (
+    <ToastContext.Provider value={{ notify }}>
+      {children}
+      <div style={containerStyle} aria-live="polite" aria-atomic="true">
+        {toasts.map((toast) => (
+          <div key={toast.id} style={toastStyle(toast.type)}>
+            <span>{toast.message}</span>
+            <button
+              type="button"
+              style={closeStyle}
+              onClick={() => dismiss(toast.id)}
+              aria-label="Close notification"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
+function useToast() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) {
+    throw new Error("useToast must be used within ToastProvider");
+  }
+  return ctx;
+}
+
+function getErrorMessage(err: any, fallback: string) {
+  if (!err) return fallback;
+  if (typeof err === "string") return err;
+  if (err.message) return err.message;
+  return fallback;
+}
+
 /*function AdminPanel() {
   const [activeTab, setActiveTab] = useState<Tab>("projects");
 
   return (
-    <div className="admin-layout">
+    <ToastProvider>
+      <div className="admin-layout">
       <div className="admin-sidebar">
         <div className="admin-sidebar-header">
           <div className="admin-sidebar-title">לוח מנהל</div>
@@ -77,7 +179,8 @@ function AdminPanel() {
   };
 
   return (
-    <div className="admin-layout">
+    <ToastProvider>
+      <div className="admin-layout">
       <div className="admin-sidebar">
         <div className="admin-sidebar-header">
           <div className="admin-sidebar-title">לוח מנהל</div>
@@ -132,11 +235,13 @@ function AdminPanel() {
         {activeTab === "history" && <HistoryTab />}
       </div>
     </div>
+    </ToastProvider>
   );
 }
 
 function ProjectsTab() {
   const dispatch = useDispatch<AppDispatch>();
+  const { notify } = useToast();
   const { projects, loading, error } = useSelector((state: RootState) => state.projects);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
@@ -146,18 +251,33 @@ function ProjectsTab() {
   }, []);
 
   const handleAdd = async (project: Partial<Project>) => {
-    await dispatch(addProject(project));
-    await dispatch(fetchProjects());
-    setShowAddModal(false);
+    try {
+      await dispatch(addProject(project)).unwrap();
+      notify("הפרויקט נוסף בהצלחה", "success");
+      await dispatch(fetchProjects());
+      setShowAddModal(false);
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בהוספת פרויקט"), "error");
+    }
   };
 
   const handleEdit = async (project: Project) => {
-    await dispatch(updateProject(project));
-    setEditProject(null);
+    try {
+      await dispatch(updateProject(project)).unwrap();
+      notify("הפרויקט עודכן בהצלחה", "success");
+      setEditProject(null);
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בעדכון פרויקט"), "error");
+    }
   };
 
   const handleCancel = async (project: Project) => {
-    await dispatch(cancelProject(project));
+    try {
+      await dispatch(cancelProject(project)).unwrap();
+      notify("הפרויקט בוטל", "success");
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בביטול פרויקט"), "error");
+    }
   };
 
   if (loading) return <div className="loading">טוען...</div>;
@@ -311,6 +431,7 @@ function ProjectForm({ onSubmit, onCancel, initialData }: {
 
 function TasksTab() {
   const dispatch = useDispatch<AppDispatch>();
+  const { notify } = useToast();
   const { tasks, loading, error } = useSelector((state: RootState) => state.tasks);
   const { users } = useSelector((state: RootState) => state.users);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -328,20 +449,35 @@ function TasksTab() {
   };
 
   const handleAdd = async (task: any) => {
-    await dispatch(addTask(task));
-    await dispatch(fetchTasks());
-    setShowAddModal(false);
+    try {
+      await dispatch(addTask(task)).unwrap();
+      notify("המשימה נוספה בהצלחה", "success");
+      await dispatch(fetchTasks());
+      setShowAddModal(false);
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בהוספת משימה"), "error");
+    }
   };
 
   const handleEdit = async (task: any) => {
-    await dispatch(updateTask(task));
-    await dispatch(fetchTasks());
-    setEditTask(null);
+    try {
+      await dispatch(updateTask(task)).unwrap();
+      notify("המשימה עודכנה בהצלחה", "success");
+      await dispatch(fetchTasks());
+      setEditTask(null);
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בעדכון משימה"), "error");
+    }
   };
 
   const handleCancel = async (task: any) => {
-    await dispatch(cancelTask(task));
-    await dispatch(fetchTasks());
+    try {
+      await dispatch(cancelTask(task)).unwrap();
+      notify("המשימה בוטלה", "success");
+      await dispatch(fetchTasks());
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בביטול משימה"), "error");
+    }
   };
 
   if (loading) return <div className="loading">טוען...</div>;
@@ -528,6 +664,7 @@ const handleSubmit = (e: React.FormEvent) => {
 
 function SubTasksTab() {
   const dispatch = useDispatch<AppDispatch>();
+  const { notify } = useToast();
   const { users } = useSelector((state: RootState) => state.users);
   const { subTasks, loading, error } = useSelector((state: RootState) => state.subTasks);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -542,20 +679,35 @@ function SubTasksTab() {
   return user ? (user.nameUser || user.NameUser) : "-";
 };
   const handleAdd = async (task: any) => {
-    await dispatch(addSubTask(task));
-    await dispatch(fetchSubTasks());
-    setShowAddModal(false);
+    try {
+      await dispatch(addSubTask(task)).unwrap();
+      notify("תת המשימה נוספה בהצלחה", "success");
+      await dispatch(fetchSubTasks());
+      setShowAddModal(false);
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בהוספת תת משימה"), "error");
+    }
   };
 
   const handleEdit = async (task: any) => {
-    await dispatch(updateSubTask(task));
-    await dispatch(fetchSubTasks());
-    setEditSubTask(null);
+    try {
+      await dispatch(updateSubTask(task)).unwrap();
+      notify("תת המשימה עודכנה בהצלחה", "success");
+      await dispatch(fetchSubTasks());
+      setEditSubTask(null);
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בעדכון תת משימה"), "error");
+    }
   };
 
   const handleCancel = async (task: any) => {
-    await dispatch(cancelSubTask(task));
-    await dispatch(fetchSubTasks());
+    try {
+      await dispatch(cancelSubTask(task)).unwrap();
+      notify("תת המשימה בוטלה", "success");
+      await dispatch(fetchSubTasks());
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בביטול תת משימה"), "error");
+    }
   };
 
   if (loading) return <div className="loading">טוען...</div>;
@@ -748,6 +900,7 @@ const taskName = selectedTask ? (selectedTask.title || selectedTask.Title) : "";
 
 function UsersTab() {
   const dispatch = useDispatch<AppDispatch>();
+  const { notify } = useToast();
   const { users, loading, error } = useSelector((state: RootState) => state.users);
 
   useEffect(() => {
@@ -755,8 +908,13 @@ function UsersTab() {
   }, []);
 
   const handleDeactivate = async (user: any) => {
-    await dispatch(deactivateUser(user));
-    await dispatch(fetchUsers());
+    try {
+      await dispatch(deactivateUser(user)).unwrap();
+      notify("העובד הושבת", "success");
+      await dispatch(fetchUsers());
+    } catch (err: any) {
+      notify(getErrorMessage(err, "שגיאה בהשבתת עובד"), "error");
+    }
   };
 
   if (loading) return <div className="loading">טוען...</div>;
