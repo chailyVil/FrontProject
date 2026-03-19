@@ -54,8 +54,8 @@ export const updateTask = createAsyncThunk(
           startedAt: task.StartedAt,
           deadline: task.Deadline,
         };
-        console.log("sending task:", mapped);  // ✅ הוסיפי את זה
-        const response = await API.put(`/TaskItem/${task.Id}`, mapped); // ✅
+        console.log("sending task:", mapped);  
+        const response = await API.put(`/TaskItem/${task.Id}`, mapped); 
         return response.data;
       } catch (err: any) {
         return rejectWithValue(getErrorMessage(err, "שגיאה בעדכון משימה"));
