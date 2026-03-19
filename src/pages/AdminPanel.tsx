@@ -583,6 +583,7 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
   const [priority, setPriority] = useState(initialData?.priority?.toString() || "0");
   const [expected, setExpected] = useState(initialData?.expected || 1);
   const [status, setStatus] = useState(initialData?.status?.toString() || initialData?.Status?.toString() || "0");
+  const [error, setError] = useState<string | null>(null);
   const [deadline, setDeadline] = useState(
     (initialData?.deadline || initialData?.Deadline)
       ? new Date(initialData.deadline || initialData.Deadline).toISOString().split("T")[0]
@@ -591,6 +592,7 @@ function TaskForm({ onSubmit, onCancel, initialData }: {
 
 const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    try {
     // 1. מחפשים את הפרויקט הנבחר מתוך רשימת הפרויקטים כדי לחלץ את השם שלו
     const selectedProject = projects.find((p: any) => (p.id || p.Id) === projectId);
     

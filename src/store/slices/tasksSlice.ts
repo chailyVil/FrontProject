@@ -30,7 +30,7 @@ export const addTask = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(getErrorMessage(err, "שגיאה בהוספת משימה"));
     }
-  
+  }
 );
 
 export const updateTask = createAsyncThunk(
